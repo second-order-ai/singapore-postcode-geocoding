@@ -1,0 +1,32 @@
+ura_landuse_2019:
+  type: kedro_datasets.geopandas.GenericDataset
+  filepath: data/01_raw/MasterPlan2019LandUselayer.geojson
+  # source: https://data.gov.sg/datasets/d_90d86daa5bfaa371668b84fa5f01424f/view
+
+ura_buildings_2019:
+  type: kedro_datasets.geopandas.GenericDataset
+  filepath: data/01_raw/MasterPlan2019Buildinglayer.geojson
+  # source: https://data.gov.sg/datasets/d_e8e3249d4433845bdd8034ae44329d9e/view
+
+open_data_postal_code:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/geonames-postal-code.parquet
+  # source: https://public.opendatasoft.com/explore/dataset/geonames-postal-code/table/?refine.country_code=SG
+  # scrape: https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-postal-code/exports/parquet?lang=en&refine=country_code%3A%22SG%22&timezone=Europe%2FLondon
+
+sg_postcode_based_via_getdata:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/latest_all.csv
+  # source: https://sgp.postcodebase.com/all
+  # scrape: https://cache.getdata.io/n58559_4620d2753c6fd23db07f9df3fdf5d9dceses/latest_all.csv
+
+one_map_scrape:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/onemap_scrape_database.csv.gz
+  # source: https://www.onemap.gov.sg/apidocs/search
+  # scrape: https://github.com/xuancong84/singapore-address-heatmap/blob/master/database.csv.gz
+
+
+singapore_postcodes_geocoded:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/singapore_postcodes_geocoded.parquet
