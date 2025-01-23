@@ -1,12 +1,14 @@
+import re
+import time
 from pathlib import Path
-
+import pydeck as pdk
+from pydeck.data_utils.viewport_helpers import compute_view
+import humanize
 import pandas as pd
 import streamlit as st
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-import time
-import humanize
 
 st.logo(
     "src/singapore_postcode_geocoding/app/assets/512x512_fav_512x512_logomark.png",
@@ -22,9 +24,9 @@ st.sidebar.write(
     """
     Easily geocode your Singapore postal codes:
     1. Upload a file with a column of postal codes
-    2. The will then geocoded data with latitude and longitude coordinates, and other information from the mater postal-code geodataset.
+    2. The post codes will be geocoded with latitude and longitude coordinates, and other information from the mater postal-code geo-dataset.
     3. View results in a table and on a map.
-    4. Download the results as a CSV, Excel or Parquet file.
+    4. Download the results as a CSV file.
 
     An example file can be downloaded below.
     """
@@ -70,11 +72,45 @@ def return_postcodes():
     return st.session_state["data"]["geocoded_postcodes"]
 
 
+def generate_map(plot_df) -> None:
+    point_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=plot_df,
+        get_position=["LONGITUDE", "LATITUDE"],
+        get_color=[255, 0, 0, 128],  # Red with 50% transparency
+        pickable=True,
+        auto_highlight=True,
+        get_radius=75,
+    )
+    computed_view = compute_view(
+        points=plot_df[["LONGITUDE", "LATITUDE"]],
+        view_proportion=0.9,
+    )
+    # Set view state centered on Singapore
+    view_state = pdk.ViewState(
+        longitude=computed_view.longitude,
+        latitude=computed_view.latitude,
+        zoom=computed_view.zoom,
+        min_zoom=9,  # Show at least all of Singapore
+        max_zoom=20,  # Max zoom for building level detail
+        pitch=0,  # Top-down view
+        bearing=0,  # Align to true north
+    )
+    # Create and display deck
+    deck = pdk.Deck(
+        layers=[point_layer],
+        initial_view_state=view_state,
+        tooltip={"text": "{ADDRESS}\nPostal Code: {POSTAL}"},
+        map_style=None,
+    )
+
+    st.pydeck_chart(deck)
+
+
 postcode = return_postcodes()
 
 # Streamlit app
 st.title("Singapore postcode geocoder")
-st.write("")
 
 # File uploader
 uploaded_files = st.file_uploader(
@@ -93,10 +129,12 @@ if uploaded_files:
                 for uploaded_file in uploaded_files
             ]
         ).reset_index(drop=True)
-        name = f"{uploaded_files[0].name}--{uploaded_files[1].name}"
+        filename_1 = re.sub(r"\..*$", "", uploaded_files[0].name)
+        filename_2 = re.sub(r"\..*$", "", uploaded_files[1].name)
+        name = f"{filename_1}--{filename_2}"
     else:
         user_df = pd.read_csv(uploaded_files[0])
-        name = uploaded_files[0].name
+        name = re.sub(r"\..*$", "", uploaded_files[0].name)
 
     # Display the uploaded file
     heading_col, view_all_column = st.columns(2)
@@ -108,8 +146,6 @@ if uploaded_files:
         st.write(user_df.head())
     else:
         st.write(user_df)
-    st.write(postcode["POSTAL"].astype(int).min())
-    st.write(postcode["POSTAL"].astype(int).max())
     # Select the column with postal codes
     postal_code_column = st.selectbox(
         "Select the column with postal codes",
@@ -151,7 +187,7 @@ if uploaded_files:
         with geo_heading_col:
             st.markdown(
                 "Geocoded postal codes:",
-                help=f"""
+                help="""
 The geo-info (latitude and longitude info) are added as new fields, together with other fields from the master postal code geodataset.
 The fields include:
 
@@ -175,12 +211,12 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
             st.write(merged_df.head())
         else:
             st.write(merged_df)
-
+        generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
         # Option to download the merged DataFrame
         csv = merged_df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download the geocoded data as a CSV file",
             data=csv,
-            file_name=f"{name}_postal_geocoded.csv",
+            file_name=f"{name}__postal_geocoded.csv",
             mime="text/csv",
         )
