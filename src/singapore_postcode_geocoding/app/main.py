@@ -12,6 +12,7 @@ from kedro.framework.startup import bootstrap_project
 from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
     validate_and_format_postcodes,
 )
+import pandas as pd
 
 st.logo(
     "src/singapore_postcode_geocoding/app/assets/512x512_fav_512x512_logomark.png",
@@ -33,6 +34,19 @@ st.sidebar.write(
 
     An example file can be downloaded below.
     """
+)
+csv_test = (
+    pd.read_csv(
+        "https://raw.githubusercontent.com/second-order-ai/singapore-postcode-geocoding/refs/heads/main/data/01_raw/test/GreenMarkBuildings.csv"
+    )
+    .to_csv(index=False)
+    .encode("utf-8")
+)
+st.sidebar.download_button(
+    label="Download example file",
+    data=csv_test,
+    file_name=f"GreenMarkBuildings__test_file.csv",
+    mime="text/csv",
 )
 
 if "context" not in st.session_state:
@@ -68,11 +82,24 @@ def load_geocoded_postcodes():
     return load_data("singapore_postcodes_geocoded")
 
 
+def load_geocoded_postcodes_master_list():
+    return load_data("singapore_postcodes_masterlist")
+
+
 @st.cache_data
 def return_postcodes():
     if "geocoded_postcodes" not in st.session_state["data"]:
         st.session_state["data"]["geocoded_postcodes"] = load_geocoded_postcodes()
     return st.session_state["data"]["geocoded_postcodes"]
+
+
+@st.cache_data
+def return_postcodes_masterlist():
+    if "geocoded_postcodes_master_list" not in st.session_state["data"]:
+        st.session_state["data"]["geocoded_postcodes_master_list"] = (
+            load_geocoded_postcodes_master_list()
+        )
+    return st.session_state["data"]["geocoded_postcodes_master_list"]
 
 
 def generate_map(plot_df) -> None:
@@ -111,6 +138,7 @@ def generate_map(plot_df) -> None:
 
 
 postcode = return_postcodes()
+postcode_masterlist = return_postcodes_masterlist()
 
 # Streamlit app
 st.title("Singapore postcode geocoder")
@@ -161,7 +189,9 @@ if uploaded_files:
         # Do some basic tests first to check if it is a singapore postcode, and remove those that don't meet the format.
         # Has to be numbers, digits and
         user_df_format = validate_and_format_postcodes(
-            df=user_df, input_col=postal_code_column
+            df=user_df,
+            input_col=postal_code_column,
+            master_postcodes=postcode_masterlist,
         )
 
         # Merge the uploaded file with the internal dataset
@@ -212,7 +242,27 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
             st.write(merged_df.head())
         else:
             st.write(merged_df)
-        generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
+        non_merged = merged_df.loc[merged_df["LATITUDE"].isna()]
+        if len(non_merged) > 0:
+            st.caption(
+                f"**{len(non_merged)}** ({len(non_merged) / len(merged_df) * 100:.2f}%) postal codes could not be geocoded."
+            )
+            tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
+            with tab2:
+                wrong_stat = pd.DataFrame(
+                    non_merged["INCORRECT_INPUT_POSTCODE_REASON"].value_counts()
+                )
+                wrong_stat = wrong_stat.assign(
+                    **{"%": (wrong_stat["count"] / len(non_merged)).round(2) * 100}
+                )
+                st.write(wrong_stat)
+                st.write("The records at fault:")
+                st.write(non_merged)
+            with tab1:
+                generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
+        else:
+            generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
+
         # Option to download the merged DataFrame
         csv = merged_df.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -220,4 +270,5 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
             data=csv,
             file_name=f"{name}__postal_geocoded.csv",
             mime="text/csv",
+            help="Note that the postal codes that could not be geocoded are included in the download.",
         )
