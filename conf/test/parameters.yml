@@ -1,5 +1,22 @@
-post_code_range:
-  max_postcode_int: 18906
-  min_postcode_int: 918146
-  min_postcode_len: 5
-  max_postcode_len: 6
+postcode_validation:
+  range:
+    int: [18906, 918146]
+    len: [5, 6]
+  drop_incorrect: false
+  keep_validation_fields: true
+  keep_formatted_postcode_field: true
+  validation_field_names:
+    correct_input_flag: CORRECT_INPUT_POSTCODE
+    incorrect_reason: INCORRECT_INPUT_POSTCODE_REASON
+    formatted_postcode: FORMATTED_POSTCODE
+
+postcode_field_name_formatted_alias:
+  - postcode
+  - postalcode
+  - zipcode
+  - postal  # these are contained in the above
+  - post
+  - zip
+
+address_field_name_formatted_alias:
+  - address

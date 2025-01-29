@@ -26,7 +26,80 @@ one_map_scrape:
   # source: https://www.onemap.gov.sg/apidocs/search
   # scrape: https://github.com/xuancong84/singapore-address-heatmap/blob/master/database.csv.gz
 
+# Test geocoding files from data.gov.sg
+
+GreenMarkBuildings:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/GreenMarkBuildings.csv
+  # source: https://data.gov.sg/datasets/d_c4bd082b48fa7611713f39e23d250c27/view
+
+ListofGovernmentMarketsHawkerCentres:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/ListofGovernmentMarketsHawkerCentres.csv
+  # source: https://data.gov.sg/datasets/d_68a42f09f350881996d83f9cd73ab02f/view
+
+ManagementCorporationStrataTitle:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/ManagementCorporationStrataTitle.csv
+  # source: https://data.gov.sg/datasets/d_1f9391a2f1476cdaf4f05a8d3a05c257/view
+
+ListingofBuildingEnergyPerformanceData2020:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/ListingofBuildingEnergyPerformanceData2020.csv
+  # source: https://data.gov.sg/datasets/d_e86d8a219d0936dbb321ade068a381da/view
+
+HDBCarparkInformation:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/HDBCarparkInformation.csv
+  # source: https://data.gov.sg/datasets/d_23f946fa557947f93a8043bbef41dd09/view
+
+HDBPropertyInformation:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/HDBPropertyInformation.csv
+  # source: https://data.gov.sg/datasets/d_17f5382f26140b1fdae0ba2ef6239d2f/view
+
+RentingOutofFlats2024CSV:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/RentingOutofFlats2024CSV.csv
+  # source: https://data.gov.sg/datasets/d_c9f57187485a850908655db0e8cfe651/view
+
+SGOSatelliteOffices:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/SGOSatelliteOffices.csv
+  # source: https://data.gov.sg/datasets/d_585344026a85579273007a1eb048d4da/view
+
+MCSTinformation:
+  type: pandas.ExcelDataset
+  filepath: data/01_raw/test/MCSTinformation.xlsx
+  # source: https://data.gov.sg/datasets/d_f988c57e16e99ad3a649aa04572efd1c/view
+
+EntitiesRegisteredwithACRA:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/EntitiesRegisteredwithACRA.csv
+  # source: https://data.gov.sg/datasets/d_3f960c10fed6145404ca7b821f263b87/view
+
+AEDLocations:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/AEDLocations.csv
+  # source: https://data.gov.sg/datasets/d_3f960c10fed6145404ca7b821f263b87/view
+
+ListofSupermarketLicences:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/ListofSupermarketLicences.csv
+  # source: https://data.gov.sg/datasets/d_3f960c10fed6145404ca7b821f263b87/view
+
+DatesofHawkerCentresClosure:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/DatesofHawkerCentresClosure.csv
+  # source: https://data.gov.sg/datasets/d_bda4baa634dd1cc7a6c7cad5f19e2d68/view
+
+# geospatial data:
+# around 903 geospatial datasets available from https://data.gov.sg/datasets?formats=GEOJSON|KML|SHP|KMZ
+# these could be useful to train machine learning models for auto-geocoding or entity resolution to geocoded locations. Their locations are known, so they can be automatically matched to ground-truth data via the locations.
+
+# Test output
 
 singapore_postcodes_geocoded:
   type: pandas.ParquetDataset
   filepath: data/03_primary/singapore_postcodes_geocoded.parquet
+  versioned: true
