@@ -9,6 +9,9 @@ import streamlit as st
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
+from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
+    validate_and_format_postcodes,
+)
 
 st.logo(
     "src/singapore_postcode_geocoding/app/assets/512x512_fav_512x512_logomark.png",
@@ -154,24 +157,22 @@ if uploaded_files:
     )
 
     start_time = time.perf_counter()
-    if postal_code_column in user_df.columns:
+    if postal_code_column in user_df.columns and postal_code_column is not None:
         # Do some basic tests first to check if it is a singapore postcode, and remove those that don't meet the format.
         # Has to be numbers, digits and
-        user_df_format = user_df.assign(
-            __merge_postal_code=user_df[postal_code_column]
-            .astype("Int64")
-            .astype("string")
-            .str.zfill(6)
+        user_df_format = validate_and_format_postcodes(
+            df=user_df, input_col=postal_code_column
         )
+
         # Merge the uploaded file with the internal dataset
         merged_df = user_df_format.merge(
-            postcode.drop_duplicates("POSTAL"),
-            left_on="__merge_postal_code",
-            right_on="POSTAL",
+            postcode.drop_duplicates("FORMATTED_POSTCODE"),
+            left_on="FORMATTED_POSTCODE",
+            right_on="FORMATTED_POSTCODE",
             how="left",
             suffixes=("", "_GEOCODED_DATASET"),
             validate="m:1",
-        ).drop(columns=["__merge_postal_code"])
+        )
 
         total_records = len(user_df)
         matched_records = merged_df["ADDRESS"].notna().sum()
