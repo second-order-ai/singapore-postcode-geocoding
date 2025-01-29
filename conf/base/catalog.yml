@@ -18,3 +18,8 @@ singapore_postcodes_geocoded:
   type: pandas.ParquetDataset
   filepath: data/03_primary/singapore_postcodes_geocoded.parquet
   versioned: true
+
+singapore_postcodes_masterlist:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/singapore_postcodes_masterlist.parquet
+  versioned: true
