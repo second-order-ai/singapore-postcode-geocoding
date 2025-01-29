@@ -27,10 +27,15 @@ st.sidebar.title("How to use the app")
 st.sidebar.write(
     """
     Easily geocode your Singapore postal codes:
-    1. Upload a file with a column of postal codes
-    2. The post codes will be geocoded with latitude and longitude coordinates, and other information from the mater postal-code geo-dataset.
-    3. View results in a table and on a map.
-    4. Download the results as a CSV file.
+    1. Upload a file that contains postal code information.
+    2. View the geocoding results in a table and on a map.
+    3. Download the results as a CSV file.
+
+    How it works:
+     * The app will automatically try to find and extract postal code information. 
+     * Postal codes can be in a dedicated field, or imbedded in a field (eg. full address).
+     * You can manually select the field with postal code info if the automatic detection fails.
+     * The postal codes are geocoded with latitude and longitude coordinates, and other information from the master postal-code geo-dataset.
 
     An example file can be downloaded below.
     """
