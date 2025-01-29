@@ -20,6 +20,8 @@ data/**
 # also keep these datasets
 !data/03_primary/singapore_postcodes_geocoded.parquet/**/*
 !data/03_primary/singapore_postcodes_masterlist.parquet/**/*
+!data/01_raw/test/GreenMarkBuildings.csv
+
 # !data/01_raw/reviews.csv
 # !data/01_raw/shuttles.xlsx 
 
