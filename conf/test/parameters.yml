@@ -20,3 +20,6 @@ postcode_field_name_formatted_alias:
 
 address_field_name_formatted_alias:
   - address
+
+regex_patterns:
+  postcode: "(?<!\\d)\\d{5,6}(?!\\d)"
