@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 
@@ -20,7 +22,7 @@ def parse_numeric_postcodes(
     """
     Steps 1 & 2:
      - Convert postcode column to numeric, coercing invalid entries to NaN.
-     - Mark those that fail numeric conversion with 'NOT_NUMERIC'.
+     - Mark those that fail numeric conversion with 'NOT_NUMERIC' and not Integer
      - Mark rows with no input as 'NO_INPUT_PROVIDED'.
     """
     incorrect_reason_field = validation_field_names["incorrect_reason"]
@@ -64,6 +66,42 @@ def parse_numeric_postcodes(
     return df
 
 
+def check_is_integer(
+    df: pd.DataFrame,
+    validation_field_names: dict,
+) -> pd.DataFrame:
+    """Check if numeric postcodes are integers.
+
+    Args:
+        df: DataFrame with numeric postcodes
+        postal_int_range: List with [min, max] valid postcode values
+        validation_field_names: Dictionary with field name mappings
+    """
+    incorrect_reason_field = validation_field_names["incorrect_reason"]
+    correct_input_flag_field = validation_field_names["correct_input_flag"]
+    formatted_postcode = validation_field_names["formatted_postcode"]
+
+    # Check for non-integer values (has decimal part)
+    non_integer_mask = df[formatted_postcode].notna() & (
+        df[formatted_postcode] % 1 != 0
+    )
+
+    # Update validation fields for non-integer values
+    df = df.assign(
+        **{
+            incorrect_reason_field: df[incorrect_reason_field].mask(
+                non_integer_mask, "NOT_INTEGER"
+            ),
+            correct_input_flag_field: df[correct_input_flag_field].mask(
+                non_integer_mask, False
+            ),
+            formatted_postcode: df[formatted_postcode].mask(non_integer_mask, np.nan),
+        }
+    )
+
+    return df
+
+
 def check_postcode_range(
     df: pd.DataFrame,
     postal_int_range: list[int],
@@ -97,6 +135,7 @@ def check_postcode_range(
             correct_input_flag_field: df[correct_input_flag_field].mask(
                 out_of_range_mask, False
             ),
+            formatted_postcode: df[formatted_postcode].mask(out_of_range_mask, np.nan),
         }
     )
     return df
@@ -194,8 +233,9 @@ def validate_and_format_postcodes(
     keep_formatted_postcode_field = postcode_validation_config[
         "keep_formatted_postcode_field"
     ]
-
+    logging.info(f"Checking postcodes in column: {input_col}")
     df = parse_numeric_postcodes(df, input_col, validation_field_names)
+    df = check_is_integer(df, validation_field_names)
     df = check_postcode_range(df, postal_int_range, validation_field_names)
     df = format_valid_postcodes(df, validation_field_names)
 
