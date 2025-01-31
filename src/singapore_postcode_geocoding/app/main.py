@@ -12,14 +12,14 @@ from kedro.framework.startup import bootstrap_project
 from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
     validate_and_format_postcodes,
 )
+from singapore_postcode_geocoding.pipelines.post_code_identification.nodes.auto_identification import (
+    calculate_all_match_success,
+    find_best_postcode_column,
+    auto_convert_postcode_column,
+)
+
 import pandas as pd
 
-st.logo(
-    "src/singapore_postcode_geocoding/app/assets/512x512_fav_512x512_logomark.png",
-    size="large",
-    link=None,
-    icon_image="src/singapore_postcode_geocoding/app/assets/512x512_fav_512x512_logomark.png",
-)
 
 # Page setting
 st.set_page_config(layout="wide", page_title="Singapore postcode geocoder")
@@ -27,17 +27,19 @@ st.sidebar.title("How to use the app")
 st.sidebar.write(
     """
     Easily geocode your Singapore postal codes:
-    1. Upload a file that contains postal code information.
+    1. Upload a file that contains postal code information. Multiple files can be uploaded at once, if they have the same structure.
     2. View the geocoding results in a table and on a map.
-    3. Download the results as a CSV file.
-
+    3. Download the results as a CSV file at the bottom of the page.
+    4. Clear the files in the upload box, and upload new files to geocode.
+    """
+)
+st.sidebar.caption(
+    """
     How it works:
      * The app will automatically try to find and extract postal code information. 
      * Postal codes can be in a dedicated field, or imbedded in a field (eg. full address).
      * You can manually select the field with postal code info if the automatic detection fails.
      * The postal codes are geocoded with latitude and longitude coordinates, and other information from the master postal-code geo-dataset.
-
-    An example file can be downloaded below.
     """
 )
 csv_test = (
@@ -48,7 +50,7 @@ csv_test = (
     .encode("utf-8")
 )
 st.sidebar.download_button(
-    label="Download example file",
+    label="An example file can be downloaded below here",
     data=csv_test,
     file_name=f"GreenMarkBuildings__test_file.csv",
     mime="text/csv",
@@ -183,16 +185,52 @@ if uploaded_files:
     else:
         st.write(user_df)
     # Select the column with postal codes
+
+    # auto-extract postcode here:
+    auto_extract_prediction = calculate_all_match_success(
+        df=user_df, master_postcodes=postcode_masterlist
+    )
+    best_match, success_candidate_flag = find_best_postcode_column(
+        auto_extract_prediction, success_threshold=0.1
+    )
+    if success_candidate_flag:
+        if best_match["TYPE"] == "DIRECT":
+            st.caption(
+                f"`{best_match['FIELD']}` is the best candidate postcode column. The predicated success rate for using it is {best_match['SUCCESS_RATE'] * 100}%"
+            )
+        else:
+            st.caption(
+                f"The `{best_match['FIELD']}` is the best candidate column with imbedded postcode info. The predicated success rate for using it is {best_match['SUCCESS_RATE'] * 100}%"
+            )
+    else:
+        st.caption(
+            f"Unfortunately, there are no good candidate columns with postcode info. The best-predicated success rate was only {best_match['SUCCESS_RATE']}. Please select one manually to proceed."
+        )
+
     postal_code_column = st.selectbox(
-        "Select the column with postal codes",
+        "Select or change the column with postal codes:",
         user_df.columns,
         index=None,
+        help="Select the column with postal code info to geocode. If the automatic detection failed, or if you want to use a different column, please select the correct one manually.",
     )
 
     start_time = time.perf_counter()
     if postal_code_column in user_df.columns and postal_code_column is not None:
         # Do some basic tests first to check if it is a singapore postcode, and remove those that don't meet the format.
         # Has to be numbers, digits and
+        extraction_method = st.radio(
+            "Select postcode extraction method:",
+            options=[
+                "dedicated",  # Direct column matching
+                "embedded",  # Extract from text
+                "auto-detect",  # Try both methods
+            ],
+            help="Choose how to extract postcodes from the selected column:\n"
+            "- Dedicated: The column only contains postcodes\n"
+            "- Embedded: Extract postcodes from within column-text, such as addresses\n"
+            "- Auto-detect: Automatically find and use the best method based on the highest success rate",
+        )
+
         user_df_format = validate_and_format_postcodes(
             df=user_df,
             input_col=postal_code_column,
@@ -217,7 +255,7 @@ if uploaded_files:
             process_time, minimum_unit="milliseconds"
         )
         st.caption(
-            f"Processed **{total_records}** records in **{human_readable_time}** and matched **{matched_records}** records ({fraction_merged:.2%})."
+            f"Processed **{total_records}** records in **{human_readable_time}** and matched **{matched_records}** records ({fraction_merged:.2%}) in the `{postal_code_column}` column."
         )
         geo_heading_col, geo_view_all_column = st.columns(2)
         with geo_heading_col:
@@ -254,6 +292,9 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
             )
             tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
             with tab2:
+                st.write(
+                    "Below are the reasons for the failed matches and the number and \% of records at fault:"
+                )
                 wrong_stat = pd.DataFrame(
                     non_merged["INCORRECT_INPUT_POSTCODE_REASON"].value_counts()
                 )
@@ -262,10 +303,22 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
                 )
                 st.write(wrong_stat)
                 st.write("The records at fault:")
+                st.write(
+                    "Below are the records at fault. See the `INCORRECT_INPUT_POSTCODE_REASON` column at the end of the table:"
+                )
                 st.write(non_merged)
+                st.write(
+                    "Note that the download file contains both the geocoded and failed geocoded data."
+                )
             with tab1:
+                st.caption(
+                    "The map below shows the location of the successfully geocoded postal codes. The address and postcode of each location are displayed when hovering over the points."
+                )
                 generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
         else:
+            st.caption(
+                "The map below shows the location of the successfully geocoded postal codes. The address and postcode of each location are displayed when hovering over the points."
+            )
             generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
 
         # Option to download the merged DataFrame
