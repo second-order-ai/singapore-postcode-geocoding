@@ -35,6 +35,8 @@ from singapore_postcode_geocoding.pipelines.post_code_identification.nodes.regex
 AUTO_IDENTIFY_CONFIG = {
     "columns": None,
     "sample_size": 100,
+    "success_threshold": 0.5,
+    "regex_pattern": "(?<!\\d)\\d{5,6}(.0+)?(?!\\d)",
 }
 
 
@@ -67,9 +69,10 @@ def calculate_indirect_match_success(
     column: str,
     postcode_validation_config: dict | None = None,
     master_postcodes: pd.DataFrame | None = None,
+    postcode_pattern: str | None = None,
 ) -> float:
     """Calculate success rate for indirect postcode matching on a column."""
-    extracted = extract_postcodes_from_series(df[column])
+    extracted = extract_postcodes_from_series(df[column], postcode_pattern)
     validated = validate_and_format_postcodes(
         df=extracted,
         input_col="EXTRACTED_POSTCODE",
@@ -90,7 +93,10 @@ def calculate_direct_match_success_multiple_fields(
         columns = list(df.columns)
     return {
         col: calculate_direct_match_success(
-            df, col, postcode_validation_config, master_postcodes
+            df,
+            col,
+            postcode_validation_config,
+            master_postcodes,
         )
         for col in columns
     }
@@ -101,13 +107,14 @@ def calculate_indirect_match_success_multiple_fields(
     columns: list[str] | None = None,
     postcode_validation_config: dict | None = None,
     master_postcodes: pd.DataFrame | None = None,
+    postcode_pattern: str | None = None,
 ) -> dict[str, float]:
     """Calculate success rates for indirect postcode matching on multiple columns."""
     if columns is None:
         columns = list(df.columns)
     return {
         col: calculate_indirect_match_success(
-            df, col, postcode_validation_config, master_postcodes
+            df, col, postcode_validation_config, master_postcodes, postcode_pattern
         )
         for col in columns
     }
@@ -162,6 +169,7 @@ def calculate_all_match_success(
         auto_identify_config = AUTO_IDENTIFY_CONFIG
     sample_size = auto_identify_config.get("sample_size", 100)
     columns = auto_identify_config.get("columns", list(df.columns))
+    postcode_regex_pattern = auto_identify_config.get("regex_pattern", None)
 
     sample_size = sample_size if sample_size else 100
     columns = columns if columns else list(df.columns)
@@ -169,10 +177,17 @@ def calculate_all_match_success(
     df_sample = df.sample(n=min(sample_size, len(df)), random_state=SEED)
     # Get success rates
     direct_rates = calculate_direct_match_success_multiple_fields(
-        df_sample, columns, postcode_validation_config, master_postcodes
+        df_sample,
+        columns,
+        postcode_validation_config,
+        master_postcodes,
     )
     indirect_rates = calculate_indirect_match_success_multiple_fields(
-        df_sample, columns, postcode_validation_config, master_postcodes
+        df_sample,
+        columns,
+        postcode_validation_config,
+        master_postcodes,
+        postcode_regex_pattern,
     )
 
     # Combine into DataFrame
@@ -182,12 +197,14 @@ def calculate_all_match_success(
                 {
                     "FIELD": columns,
                     "SUCCESS_RATE": [direct_rates[col] for col in columns],
+                    "EXTRACT_PATTERN": None,
                 }
             ).assign(TYPE="DIRECT"),
             pd.DataFrame(
                 {
                     "FIELD": columns,
                     "SUCCESS_RATE": [indirect_rates[col] for col in columns],
+                    "EXTRACT_PATTERN": postcode_regex_pattern,
                 }
             ).assign(TYPE="INDIRECT"),
         ]
@@ -225,9 +242,14 @@ def auto_convert_postcode_column(
             master_postcodes,
         )
     else:
-        df = extract_postcodes_from_series(df[best_match_success["FIELD"]])
+        df = extract_postcodes_from_series(
+            df[best_match_success["FIELD"]], best_match_success["EXTRACT_PATTERN"]
+        )
         df = validate_and_format_postcodes(
-            df, "EXTRACTED_POSTCODE", postcode_validation_config, master_postcodes
+            df,
+            "EXTRACTED_POSTCODE",
+            postcode_validation_config,
+            master_postcodes,
         )
     return df, best_match_success
 

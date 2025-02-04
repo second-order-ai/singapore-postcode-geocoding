@@ -14,7 +14,7 @@ auto_identify_config:
   columns: null
   sample_size: 100
   success_threshold: 0.5
-
+  regex_pattern: "(?<!\\d)\\d{5,6}(?!\\d)"
 
 postcode_field_name_formatted_alias:
   - postcode
@@ -27,5 +27,5 @@ postcode_field_name_formatted_alias:
 address_field_name_formatted_alias:
   - address
 
-regex_patterns:
+regex_pattern:
   postcode: "(?<!\\d)\\d{5,6}(?!\\d)" # '(?<!\d)\d{5,6}(.0+)?(?!\d)'
