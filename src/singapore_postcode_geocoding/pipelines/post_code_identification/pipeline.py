@@ -1,72 +1,61 @@
-# from kedro.pipeline import Pipeline, node
+from kedro.pipeline import Pipeline, node, pipeline
 
-# from .nodes import (
-#     enrich_open_postcode,
-#     extend_onemap,
-#     format_onemap,
-#     format_opendata,
-#     format_postcodebase,
-#     postcode_full_type_conversion,
-#     return_postcode_master_list,
-# )
+from .nodes.auto_identification import (
+    auto_convert_postcode_column,
+    calculate_all_match_success,
+    find_best_postcode_column,
+)
 
 
-# def create_pipeline(**kwargs) -> Pipeline:
-#     return Pipeline(
-#         [
-#             node(
-#                 func=format_onemap,
-#                 inputs=["one_map_scrape", "params:postcode_validation"],
-#                 outputs="formatted_onemap",
-#                 name="format_onemap",
-#             ),
-#             node(
-#                 func=format_opendata,
-#                 inputs=["open_data_postal_code", "params:postcode_validation"],
-#                 outputs="formatted_opendata",
-#                 name="format_opendata",
-#             ),
-#             node(
-#                 func=format_postcodebase,
-#                 inputs=["sg_postcode_based_via_getdata", "params:postcode_validation"],
-#                 outputs="formatted_postcodebase",
-#                 name="format_postcodebase",
-#             ),
-#             node(
-#                 func=enrich_open_postcode,
-#                 inputs=[
-#                     "formatted_opendata",
-#                     "formatted_postcodebase",
-#                     "params:postcode_validation",
-#                 ],
-#                 outputs="enriched_opendata",
-#                 name="enrich_opendata",
-#             ),
-#             node(
-#                 func=extend_onemap,
-#                 inputs=[
-#                     "formatted_onemap",
-#                     "enriched_opendata",
-#                     "params:postcode_validation",
-#                 ],
-#                 outputs="extended_onemap",
-#                 name="extend_onemap",
-#             ),
-#             node(
-#                 func=postcode_full_type_conversion,
-#                 inputs=["extended_onemap", "params:postcode_validation"],
-#                 outputs="singapore_postcodes_geocoded",
-#                 name="convert_types",
-#             ),
-#             node(
-#                 func=return_postcode_master_list,
-#                 inputs=["singapore_postcodes_geocoded", "params:postcode_validation"],
-#                 outputs="singapore_postcodes_masterlist",
-#                 name="return_postcode_master_list",
-#             ),
-#         ]
-#     )
+def postcode_identification_pipeline() -> Pipeline:
+    return Pipeline(
+        [
+            node(
+                calculate_all_match_success,
+                inputs=[
+                    "input_data",
+                    "params:auto_identify_config",
+                    "params:postcode_validation",
+                    "singapore_postcodes_masterlist",
+                ],
+                outputs="postcode_all_match_success",
+                name="calculate_all_match_success",
+            ),
+            node(
+                find_best_postcode_column,
+                inputs=[
+                    "postcode_all_match_success",
+                    "params:auto_identify_config",
+                ],
+                outputs=["best_postcode_column_info", "best_column_passed"],
+                name="find_best_postcode_column",
+            ),
+            node(
+                auto_convert_postcode_column,
+                inputs=[
+                    "input_data",
+                    "best_postcode_column_info",
+                    "best_column_passed",
+                    "params:postcode_validation",
+                    "singapore_postcodes_masterlist",
+                ],
+                outputs="postcode_auto_convert",
+                name="auto_convert_postcode_column",
+            ),
+        ]
+    )
 
 
-def create_pipeline():
-    pass
+def create_pipeline() -> Pipeline:
+    return pipeline(
+        pipe=postcode_identification_pipeline(),
+        namespace="post_code_identification",
+        inputs={
+            "input_data": "ListofGovernmentMarketsHawkerCentres",
+            "singapore_postcodes_masterlist": "singapore_postcodes_masterlist",
+        },
+        parameters={
+            "auto_identify_config": "auto_identify_config",
+            "postcode_validation": "postcode_validation",
+        },
+    )  # type: ignore

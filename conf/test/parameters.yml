@@ -10,6 +10,12 @@ postcode_validation:
     incorrect_reason: INCORRECT_INPUT_POSTCODE_REASON
     formatted_postcode: FORMATTED_POSTCODE
 
+auto_identify_config:
+  columns: null
+  sample_size: 100
+  success_threshold: 0.5
+
+
 postcode_field_name_formatted_alias:
   - postcode
   - postalcode
@@ -22,4 +28,4 @@ address_field_name_formatted_alias:
   - address
 
 regex_patterns:
-  postcode: "(?<!\\d)\\d{5,6}(?!\\d)"
+  postcode: "(?<!\\d)\\d{5,6}(?!\\d)" # '(?<!\d)\d{5,6}(.0+)?(?!\d)'

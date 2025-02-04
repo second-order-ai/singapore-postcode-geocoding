@@ -23,3 +23,11 @@ singapore_postcodes_masterlist:
   type: pandas.ParquetDataset
   filepath: data/03_primary/singapore_postcodes_masterlist.parquet
   versioned: true
+
+
+# Test data
+
+ListofGovernmentMarketsHawkerCentres:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/test/ListofGovernmentMarketsHawkerCentres.csv
+  # source: https://data.gov.sg/datasets/d_68a42f09f350881996d83f9cd73ab02f/view

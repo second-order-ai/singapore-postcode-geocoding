@@ -1,0 +1,86 @@
+{
+    "python.autoComplete.extraPaths": [
+        "./src"
+    ],
+    "python.analysis.extraPaths": [
+        "./src"
+    ],
+    "cSpell.words": [
+        "kedro",
+        "yaspin",
+        "ISIN",
+        "pandera",
+        "FISN",
+        "dataframe",
+        "pycountry"
+    ],
+    "black-formatter.args": [
+        "--line-length",
+        "100",
+        "--preview"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    // "python.editor.defaultFormatter": "ms-python.black-formatter",
+    "tasks": [
+        {
+            "label": "Install",
+            "type": "shell",
+            "command": ".venv/bin/kedro",
+            "args": [
+                "install"
+            ]
+        },
+        {
+            "label": "Test",
+            "group": "test",
+            "type": "shell",
+            "command": ".venv/bin/kedro",
+            "args": [
+                "test"
+            ]
+        },
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": ".venv/bin/kedro",
+            "args": [
+                "run"
+            ]
+        },
+        // This is the default build task
+        {
+            "label": "Package",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": ".venv/bin/kedro",
+            "args": [
+                "package"
+            ],
+            // Will run `Test` before packaging
+            "dependsOn": [
+                "Test"
+            ]
+        }
+    ],
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/kedro-org/kedro/develop/static/jsonschema/kedro-catalog-0.19.json": "conf/**/*catalog*"
+    },
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "workbench.list.openMode": "doubleClick",
+    "notebook.formatOnSave.enabled": true,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.nativeServer": "on",
+    "workbench.editor.enablePreview": false, 
+    // "editor.gotoLocation.multipleDefinitions": "goto"
+
+}

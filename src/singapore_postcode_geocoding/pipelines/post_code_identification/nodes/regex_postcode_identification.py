@@ -5,7 +5,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-POSTCODE_PATTERN = r"(?<!\d)\d{5,6}(?!\d)"
+POSTCODE_PATTERN = r"(?<!\d)\d{5,6}(?!\d)"  # r"(?<!\d)\d{5,6}(.0+)?(?!\d)"
 
 
 def safe_encode_text(text: str) -> str:
