@@ -69,7 +69,7 @@
         "https://raw.githubusercontent.com/kedro-org/kedro/develop/static/jsonschema/kedro-catalog-0.19.json": "conf/**/*catalog*"
     },
     "python.testing.pytestArgs": [
-        "tests"
+        "tests",
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

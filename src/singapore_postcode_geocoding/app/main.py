@@ -12,7 +12,7 @@ from kedro.framework.startup import bootstrap_project
 from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
     validate_and_format_postcodes,
 )
-from singapore_postcode_geocoding.pipelines.post_code_identification.nodes.auto_identification import (
+from singapore_postcode_geocoding.pipelines.postcode_identification.nodes.auto_identification import (
     calculate_all_match_success,
     find_best_postcode_column,
     auto_convert_postcode_column,

@@ -26,6 +26,7 @@ dependencies = [
     "rapidfuzz>=3.11.0",
     "ollama>=0.4.7",
     "pydantic>=2.10.5",
+    "pytest>=7.4.4",
 ]
 
 [project.scripts]
@@ -67,15 +68,15 @@ tools = "['Linting', 'Testing', 'Custom Logging', 'Documentation', 'Data Structu
 example_pipeline = "True"
 source_dir = "src"
 
-[tool.pytest.ini_options]
-addopts = """
---cov-report term-missing \
---cov src/singapore_postcode_geocoding -ra"""
+# [tool.pytest.ini_options]
+# addopts = """
+# --cov-report term-missing \
+# --cov src/singapore_postcode_geocoding -ra"""
 
-[tool.coverage.report]
-fail_under = 0
-show_missing = true
-exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
+# [tool.coverage.report]
+# fail_under = 0
+# show_missing = true
+# exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 
 [tool.ruff.format]
 docstring-code-format = true

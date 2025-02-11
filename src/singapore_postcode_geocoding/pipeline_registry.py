@@ -6,7 +6,7 @@ from singapore_postcode_geocoding.pipelines.data_processing import (
     create_pipeline as data_processing,
 )
 
-from singapore_postcode_geocoding.pipelines.post_code_identification import (
+from singapore_postcode_geocoding.pipelines.postcode_identification import (
     create_pipeline as post_code_identification,
 )
 

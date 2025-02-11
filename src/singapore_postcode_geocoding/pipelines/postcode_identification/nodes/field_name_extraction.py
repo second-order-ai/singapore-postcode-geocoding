@@ -1,17 +1,13 @@
-# search through all the fields in the data and find matches with the following typical field names:
-#   - postalcode
-#   - postcode
-#   - zipcode
-#   - postal
-#   - post
-#   - zip
-#
-# Use fuzzy matching with the above and score appropriately. Return a table with the column names and score per typical field name
+"""
+The idea here is to search columns for typical post code aliases.
+It could be used to break-ties for automated post code identification.
+Or extended to identify other address type fields, in case of fuzzy matching.
+"""
 
-from rapidfuzz import fuzz, distance
-import pandas as pd
-import numpy as np
 import re
+
+import pandas as pd
+from rapidfuzz import distance, fuzz
 
 
 def substring_match(s1: str, s2: str) -> bool:
