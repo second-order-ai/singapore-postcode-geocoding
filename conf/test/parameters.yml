@@ -14,7 +14,7 @@ postcode_validation:
 
 auto_identify_config:
   candidate_columns: null
-  regex_pattern: "(?<!\\d)\\d{5,6}(?!\\d)"
+  regex_pattern: "((?<!\\d)\\d{5,6}(?!\\d))"
   sample_size: 100
   success_threshold: 0.1
   seed: 42

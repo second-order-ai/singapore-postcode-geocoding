@@ -1,5 +1,5 @@
 """
-Reusable classes and functions for automatically identifying and extracting postcodes from tabular data.
+Classes and functions for automatically identifying and extracting postcodes from tabular data.
 It's rather verbose to allow it to be used in pipelines, notebooks and streamlit front-ends.
 """
 
@@ -378,6 +378,39 @@ class ConvertPostcodes:
         return self.converted_df
 
 
+def find_best_postcode_column(
+    df, validation_config, master_postcodes, auto_identify_config
+) -> pd.DataFrame:
+    test_convert_postcodes = IdentifyPostcodes(
+        df, validation_config, master_postcodes, auto_identify_config
+    )
+    test_convert_postcodes.set_sample_candidate_df()
+    test_convert_postcodes.test_convert_all_columns()
+    return test_convert_postcodes.return_conversion_test_results()
+
+
+def convert_best_postcode_column(
+    df,
+    validation_config,
+    master_postcodes,
+    auto_identify_config,
+    convert_test_results,
+) -> tuple[pd.DataFrame, bool]:
+    convert_postcodes = ConvertPostcodes(
+        df,
+        validation_config,
+        master_postcodes,
+        convert_test_results,
+        auto_identify_config["success_threshold"],
+    )
+    convert_postcodes.set_best_postcode_conversion_config()
+    if convert_postcodes.check_threshold() is False:
+        return df, False
+    else:
+        convert_postcodes.convert_column()
+        return convert_postcodes.return_converted_df(), True
+
+
 def auto_convert_postcodes(
     df, validation_config, master_postcodes, auto_identify_config
 ) -> tuple[pd.DataFrame, bool, pd.DataFrame]:
@@ -417,22 +450,15 @@ def auto_convert_postcodes(
         ...     auto_identify_config=config,
         ... )
     """
-    test_convert_postcodes = IdentifyPostcodes(
+
+    convert_test_results = find_best_postcode_column(
         df, validation_config, master_postcodes, auto_identify_config
     )
-    test_convert_postcodes.set_sample_candidate_df()
-    test_convert_postcodes.test_convert_all_columns()
-    convert_test_results = test_convert_postcodes.return_conversion_test_results()
-    convert_postcodes = ConvertPostcodes(
+    converted_df, coversion_passed = convert_best_postcode_column(
         df,
         validation_config,
         master_postcodes,
+        auto_identify_config,
         convert_test_results,
-        auto_identify_config["success_threshold"],
     )
-    convert_postcodes.set_best_postcode_conversion_config()
-    if convert_postcodes.check_threshold() is False:
-        return df, False, convert_test_results
-    else:
-        convert_postcodes.convert_column()
-        return convert_postcodes.return_converted_df(), True, convert_test_results
+    return converted_df, coversion_passed, convert_test_results
