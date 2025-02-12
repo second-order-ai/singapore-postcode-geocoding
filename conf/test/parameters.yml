@@ -18,17 +18,3 @@ auto_identify_config:
   sample_size: 100
   success_threshold: 0.1
   seed: 42
-
-postcode_field_name_formatted_alias:
-  - postcode
-  - postalcode
-  - zipcode
-  - postal  # these are contained in the above
-  - post
-  - zip
-
-address_field_name_formatted_alias:
-  - address
-
-regex_pattern:
-  postcode: "(?<!\\d)\\d{5,6}(?!\\d)" # '(?<!\\d)\\d{5,6}(.0+)?(?!\\d)'
