@@ -13,7 +13,7 @@ from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
 
 
 def regex_extract(candidates: pd.Series, regex_pattern: str) -> pd.Series:
-    """Extract first regex pattern match from a pandas Series.
+    r"""Extract first regex pattern match from a pandas Series.
 
     Args:
         candidates: Series containing potential postcode values
@@ -467,18 +467,28 @@ def auto_convert_postcodes(
 def merge_postcode_data(
     converted_df,
     master_postcode_df,
-    post_merge_key_left,
-    post_merge_key_right,
+    merge_config=None,
     post_code_conversion_passed=True,
-    drop_right_duplicates=True,
 ):
+    if merge_config is None:
+        merge_config = {
+            "merge_key_input_data": "FORMATTED_POSTCODE",
+            "merge_key_master_postcode": "FORMATTED_POSTCODE",
+            "drop_master_postcode_duplicates": True,
+        }
+    post_merge_key_left = merge_config.get("merge_key_input_data", "FORMATTED_POSTCODE")
+    post_merge_key_right = merge_config.get(
+        "merge_key_master_postcode", "FORMATTED_POSTCODE"
+    )
+    drop_right_duplicates = merge_config.get("drop_master_postcode_duplicates", True)
     if post_code_conversion_passed is False:
         return converted_df
     if drop_right_duplicates:
         master_postcode_df = master_postcode_df.drop_duplicates(post_merge_key_right)
-    return converted_df.merge(
+    merged_df = converted_df.merge(
         master_postcode_df,
         how="left",
         left_on=post_merge_key_left,
         right_on=post_merge_key_right,
     )
+    return merged_df

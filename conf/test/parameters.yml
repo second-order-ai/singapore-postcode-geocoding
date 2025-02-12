@@ -18,3 +18,8 @@ auto_identify_config:
   sample_size: 100
   success_threshold: 0.1
   seed: 42
+
+postcode_master_merge_config:
+  merge_key_input_data: FORMATTED_POSTCODE
+  merge_key_master_postcode: FORMATTED_POSTCODE
+  drop_master_postcode_duplicates: True
