@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Kedro: test_auto_identification",
+            "name": "Kedro: test_auto_identification_classes",
             "type": "debugpy",
             "request": "launch",
             "console": "integratedTerminal",
@@ -13,7 +13,7 @@
             "args": [
                 "run",
                 "--pipeline",
-                "test_auto_identification",
+                "test_auto_identification_classes",
                 "--env",
                 "test"
             ]
