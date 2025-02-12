@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Kedro: test_master_data_processing",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "master_data_processing",
+                "--env",
+                "test"
+            ]
+        },
+        {
             "name": "Kedro: test_auto_identification_classes",
             "type": "debugpy",
             "request": "launch",

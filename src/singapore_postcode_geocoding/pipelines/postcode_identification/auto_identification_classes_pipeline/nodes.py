@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import pandas as pd
 
-from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
+from singapore_postcode_geocoding.data_validation.singapore_postcode_validation import (
     validate_and_format_postcodes,
 )
 

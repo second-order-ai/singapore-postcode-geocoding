@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, pipeline
 
-from .auto_identification_classes import (
+from .auto_identification_classes_pipeline import (
     create_pipeline as test_auto_identification_classes_pipeline,
 )
 

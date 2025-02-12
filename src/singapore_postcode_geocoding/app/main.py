@@ -9,7 +9,7 @@ import streamlit as st
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-from singapore_postcode_geocoding.pipelines.data_validation.nodes import (
+from singapore_postcode_geocoding.pipelines.data_validation.singapore_postcode_validation import (
     validate_and_format_postcodes,
 )
 from singapore_postcode_geocoding.pipelines.postcode_identification.nodes.auto_identification import (
