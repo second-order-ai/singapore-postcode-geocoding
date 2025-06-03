@@ -1,0 +1,5 @@
+synthesis_config_EntitiesRegisteredwithACRA:
+  postcode_column: reg_postal_code
+  address_columns: [reg_street_name]
+  valid_invalid_split: 0.75
+  truth_column: TRUTH_VALID_IMBEDDED_POSTCODE_FLAG

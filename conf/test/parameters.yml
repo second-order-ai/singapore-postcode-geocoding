@@ -23,3 +23,5 @@ postcode_master_merge_config:
   merge_key_input_data: FORMATTED_POSTCODE
   merge_key_master_postcode: FORMATTED_POSTCODE
   drop_master_postcode_duplicates: True
+
+

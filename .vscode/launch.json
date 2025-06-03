@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Kedro: test_create_postcode_data",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "test_create_postcode_data",
+                "--env",
+                "test"
+            ]
+        },
+        {
             "name": "Kedro: test_master_data_processing",
             "type": "debugpy",
             "request": "launch",
