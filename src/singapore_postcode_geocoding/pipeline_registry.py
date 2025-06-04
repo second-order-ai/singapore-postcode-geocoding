@@ -2,10 +2,6 @@
 
 from kedro.pipeline import Pipeline
 
-from singapore_postcode_geocoding.pipelines.data_synthesis import (
-    create_pipeline as create_test_postcode_data_pipeline,
-)
-
 from singapore_postcode_geocoding.pipelines.master_data_processing import (
     create_pipeline as master_data_processing_pipeline,
 )
@@ -25,5 +21,4 @@ def register_pipelines() -> dict[str, Pipeline]:
         "master_data_processing": master_data_processing_pipeline(),
         "test_auto_identification_classes": create_test_auto_identification_classes_pipeline(),
         "test_manual_identification_classes": create_test_manual_identification_classes_pipeline(),
-        "test_create_postcode_data": create_test_postcode_data_pipeline(),
     }
