@@ -46,4 +46,10 @@ def render_sidebar():
     for file in example_files:
         st.sidebar.markdown(f"[⬇️ {file['name']}]({file['url']})")
 
-    st.sidebar.markdown("[See more example files on GitHub](https://github.com/second-order-ai/singapore-postcode-geocoding/tree/main/data/01_raw/test)") 
+    st.sidebar.markdown("[See more example files on GitHub](https://github.com/second-order-ai/singapore-postcode-geocoding/tree/main/data/01_raw/test)")
+
+    st.sidebar.markdown('---')
+    st.sidebar.markdown(
+        'This app was developed by [elias-jw](https://elias-jw.github.io/)',
+        unsafe_allow_html=True
+    ) 

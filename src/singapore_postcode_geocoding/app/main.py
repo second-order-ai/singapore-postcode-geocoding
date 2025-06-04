@@ -36,7 +36,7 @@ def main():
     # Render UI components
     render_sidebar()
     st.title("Singapore postcode geocoder")
-    
+    st.markdown("If there is a column in your data that contains Singapore postal codes, you can upload your file and use this app to geocode the data. The app will find the postal code automatically, even if it's imbedded in another column.")
     # Handle file upload and processing
     uploaded_files = st.file_uploader(
         "Upload your file that contains a postcode column:",
