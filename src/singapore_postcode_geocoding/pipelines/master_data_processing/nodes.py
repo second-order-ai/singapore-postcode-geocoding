@@ -1,3 +1,39 @@
+"""Data processing nodes for the Singapore postal code master data pipeline.
+
+This module contains the core data processing functions for standardizing and combining
+Singapore postal code data from multiple sources. The pipeline processes data from:
+- OneMap (Singapore's official geospatial platform)
+- OpenData (from opendatasoft)
+- PostcodeBase
+
+The module provides functions for:
+1. Data Formatting: Standardizing postal codes and addresses from different sources
+2. Data Enrichment: Merging and enriching data with additional information
+3. Data Extension: Combining data from multiple sources
+4. Type Conversion: Ensuring consistent data types across the dataset
+5. Master List Creation: Generating a deduplicated list of valid postal codes
+
+Each function in this module is designed to be used as a node in a Kedro pipeline,
+with standardized input and output interfaces. The functions handle data validation,
+formatting, and transformation while maintaining data lineage through source attribution.
+
+Example:
+    The pipeline can be used to process raw postal code data:
+    ```python
+    # Format OneMap data
+    formatted_onemap = format_onemap(raw_onemap_data, postcode_validation_config)
+    
+    # Format and enrich OpenData
+    formatted_opendata = format_opendata(raw_opendata, postcode_validation_config)
+    enriched_data = enrich_open_postcode(formatted_opendata, postcodebase_data, postcode_validation_config)
+    ```
+
+Note:
+    All postal codes are standardized to 6 digits with leading zeros.
+    Addresses are stored in uppercase without commas.
+    Geographic coordinates are in decimal degrees (WGS84).
+"""
+
 import pandas as pd
 from pandas import Series
 

@@ -19,13 +19,7 @@ In order to get the best out of the template:
 
 ## How to install dependencies
 
-Declare any dependencies in `requirements.txt` for `pip` installation.
-
-To install them, run:
-
-```
-pip install -r requirements.txt
-```
+Use `uv`.
 
 ## How to run your Kedro pipeline
 

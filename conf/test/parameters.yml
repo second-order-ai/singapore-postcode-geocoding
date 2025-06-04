@@ -24,4 +24,16 @@ postcode_master_merge_config:
   merge_key_master_postcode: FORMATTED_POSTCODE
   drop_master_postcode_duplicates: True
 
+# Configuration for indirect method (small dataset)
+manual_postcode_config_indirect:
+  COLUMN: "location_of_centre"  # Column containing postal codes in text
+  METHOD: "INDIRECT"
+  CONVERSION_SUCCESS_RATE: 1.0
+  REGEX_PATTERN: "\\d{6}"  # Pattern to match 6-digit numbers
+
+# Configuration for direct method (large dataset)
+manual_postcode_config_direct:
+  COLUMN: "reg_postal_code"  # Column containing clean postal codes
+  METHOD: "DIRECT"
+  CONVERSION_SUCCESS_RATE: 1.0
 

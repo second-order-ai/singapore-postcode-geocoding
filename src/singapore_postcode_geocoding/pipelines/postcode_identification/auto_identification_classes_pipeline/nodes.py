@@ -393,15 +393,16 @@ def convert_best_postcode_column(
     df,
     validation_config,
     master_postcodes,
-    auto_identify_config,
-    convert_test_results,
+    auto_identify_config = None,
+    convert_test_results = None,
 ) -> tuple[pd.DataFrame, bool]:
+    success_threshold = auto_identify_config.get("success_threshold") if auto_identify_config else 0
     convert_postcodes = ConvertPostcodes(
         df,
         validation_config,
         master_postcodes,
         convert_test_results,
-        auto_identify_config["success_threshold"],
+        success_threshold,
     )
     convert_postcodes.set_best_postcode_conversion_config()
     if convert_postcodes.check_threshold() is False:
