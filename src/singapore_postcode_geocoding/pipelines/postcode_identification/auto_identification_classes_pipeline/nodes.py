@@ -343,9 +343,11 @@ class ConvertPostcodes:
     def set_postcode_conversion_config(
         self, column, method=None, regex_pattern=None
     ) -> None:
-        self.postcode_conversion_config = dict(
-            self.convert_results.filter(f"COLUMN == {column}").iloc[0]
-        )
+        # Use proper pandas filtering with boolean indexing
+        matching_rows = self.convert_results[self.convert_results["COLUMN"] == column]
+        if matching_rows.empty:
+            raise ValueError(f"No configuration found for column: {column}")
+        self.postcode_conversion_config = dict(matching_rows.iloc[0])
         if method:
             self.postcode_conversion_config["METHOD"] = method
         if regex_pattern:
@@ -396,7 +398,7 @@ def convert_best_postcode_column(
     auto_identify_config = None,
     convert_test_results = None,
 ) -> tuple[pd.DataFrame, bool]:
-    success_threshold = auto_identify_config.get("success_threshold") if auto_identify_config else 0
+    success_threshold = auto_identify_config.get("success_threshold") if auto_identify_config else None
     convert_postcodes = ConvertPostcodes(
         df,
         validation_config,
@@ -405,7 +407,7 @@ def convert_best_postcode_column(
         success_threshold,
     )
     convert_postcodes.set_best_postcode_conversion_config()
-    if convert_postcodes.check_threshold() is False:
+    if not convert_postcodes.check_threshold():
         return df, False
     else:
         convert_postcodes.convert_column()
@@ -451,18 +453,26 @@ def auto_convert_postcodes(
         ...     auto_identify_config=config,
         ... )
     """
+    # Handle empty DataFrame case
+    if df.empty:
+        return df, False, pd.DataFrame()
 
     convert_test_results = find_best_postcode_column(
         df, validation_config, master_postcodes, auto_identify_config
     )
-    converted_df, coversion_passed = convert_best_postcode_column(
+    
+    # If no valid results found, return original DataFrame
+    if convert_test_results.empty:
+        return df, False, convert_test_results
+
+    converted_df, conversion_passed = convert_best_postcode_column(
         df,
         validation_config,
         master_postcodes,
         auto_identify_config,
         convert_test_results,
     )
-    return converted_df, coversion_passed, convert_test_results
+    return converted_df, conversion_passed, convert_test_results
 
 
 def merge_postcode_data(

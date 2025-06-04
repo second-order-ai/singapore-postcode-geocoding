@@ -29,7 +29,7 @@ manual_postcode_config_indirect:
   COLUMN: "location_of_centre"  # Column containing postal codes in text
   METHOD: "INDIRECT"
   CONVERSION_SUCCESS_RATE: 1.0
-  REGEX_PATTERN: "\\d{6}"  # Pattern to match 6-digit numbers
+  REGEX_PATTERN: "((?<!\\d)\\d{5,6}(?!\\d))"  # Pattern to match 6-digit numbers
 
 # Configuration for direct method (large dataset)
 manual_postcode_config_direct:
