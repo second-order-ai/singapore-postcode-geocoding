@@ -9,13 +9,13 @@ import streamlit as st
 from kedro.framework.project import configure_project
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-from singapore_postcode_geocoding.pipelines.data_validation.singapore_postcode_validation import (
+from singapore_postcode_geocoding.data_validation.singapore_postcode_validation import (
     validate_and_format_postcodes,
 )
-from singapore_postcode_geocoding.pipelines.postcode_identification.nodes.auto_identification import (
-    calculate_all_match_success,
+from singapore_postcode_geocoding.pipelines.postcode_identification.auto_identification_classes_pipeline.nodes import (
     find_best_postcode_column,
-    auto_convert_postcode_column,
+    auto_convert_postcodes,
+    IdentifyPostcodes,
 )
 
 import pandas as pd
@@ -174,6 +174,45 @@ if uploaded_files:
         user_df = pd.read_csv(uploaded_files[0])
         name = re.sub(r"\..*$", "", uploaded_files[0].name)
 
+    # auto-extract postcode here:
+    start_time = time.perf_counter()
+    converted_df, success, test_results = auto_convert_postcodes(
+        df=user_df,
+        validation_config={
+            "validation_field_names": {
+                "correct_input_flag": "CORRECT_INPUT_POSTCODE",
+                "incorrect_reason": "INCORRECT_INPUT_POSTCODE_REASON",
+                "formatted_postcode": "FORMATTED_POSTCODE",
+                "candidate_postcode": "POSTCODE",
+                "extracted_postcode": "EXTRACTED"
+            },
+            "range": {"int": [18906, 918146], "len": [5, 6]},
+            "drop_incorrect": False,
+            "keep_formatted_postcode_field": True,
+            "keep_validation_fields": True
+        },
+        master_postcodes=postcode_masterlist,
+        auto_identify_config={"regex_pattern": r"(?<!\d)(\d{5,6})(?!\d)", "success_threshold": 0.1}
+    )
+    
+    if success:
+        if test_results.iloc[0]["METHOD"] == "DIRECT":
+            st.caption(
+                f"`{test_results.iloc[0]['COLUMN']}` is the best candidate postcode column. The predicated success rate for using it is {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100}%"
+            )
+        else:
+            st.caption(
+                f"The `{test_results.iloc[0]['COLUMN']}` is the best candidate column with imbedded postcode info. The predicated success rate for using it is {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100}%"
+            )
+        
+        # Use the converted DataFrame directly
+        user_df = converted_df
+    else:
+        st.caption(
+            f"Unfortunately, there are no good candidate columns with postcode info. The best-predicated success rate was only {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] if not test_results.empty else 0}. Please check your input data."
+        )
+        st.stop()
+
     # Display the uploaded file
     heading_col, view_all_column = st.columns(2)
     with heading_col:
@@ -184,84 +223,32 @@ if uploaded_files:
         st.write(user_df.head())
     else:
         st.write(user_df)
-    # Select the column with postal codes
 
-    # auto-extract postcode here:
-    auto_extract_prediction = calculate_all_match_success(
-        df=user_df, master_postcodes=postcode_masterlist
-    )
-    best_match, success_candidate_flag = find_best_postcode_column(
-        auto_extract_prediction, success_threshold=0.1
-    )
-    if success_candidate_flag:
-        if best_match["TYPE"] == "DIRECT":
-            st.caption(
-                f"`{best_match['FIELD']}` is the best candidate postcode column. The predicated success rate for using it is {best_match['SUCCESS_RATE'] * 100}%"
-            )
-        else:
-            st.caption(
-                f"The `{best_match['FIELD']}` is the best candidate column with imbedded postcode info. The predicated success rate for using it is {best_match['SUCCESS_RATE'] * 100}%"
-            )
-    else:
-        st.caption(
-            f"Unfortunately, there are no good candidate columns with postcode info. The best-predicated success rate was only {best_match['SUCCESS_RATE']}. Please select one manually to proceed."
-        )
-
-    postal_code_column = st.selectbox(
-        "Select or change the column with postal codes:",
-        user_df.columns,
-        index=None,
-        help="Select the column with postal code info to geocode. If the automatic detection failed, or if you want to use a different column, please select the correct one manually.",
+    # Merge the uploaded file with the internal dataset
+    merged_df = user_df.merge(
+        postcode.drop_duplicates("FORMATTED_POSTCODE"),
+        left_on="FORMATTED_POSTCODE",
+        right_on="FORMATTED_POSTCODE",
+        how="left",
+        suffixes=("", "_GEOCODED_DATASET"),
+        validate="m:1",
     )
 
-    start_time = time.perf_counter()
-    if postal_code_column in user_df.columns and postal_code_column is not None:
-        # Do some basic tests first to check if it is a singapore postcode, and remove those that don't meet the format.
-        # Has to be numbers, digits and
-        extraction_method = st.radio(
-            "Select postcode extraction method:",
-            options=[
-                "dedicated",  # Direct column matching
-                "embedded",  # Extract from text
-                "auto-detect",  # Try both methods
-            ],
-            help="Choose how to extract postcodes from the selected column:\n"
-            "- Dedicated: The column only contains postcodes\n"
-            "- Embedded: Extract postcodes from within column-text, such as addresses\n"
-            "- Auto-detect: Automatically find and use the best method based on the highest success rate",
-        )
-
-        user_df_format = validate_and_format_postcodes(
-            df=user_df,
-            input_col=postal_code_column,
-            master_postcodes=postcode_masterlist,
-        )
-
-        # Merge the uploaded file with the internal dataset
-        merged_df = user_df_format.merge(
-            postcode.drop_duplicates("FORMATTED_POSTCODE"),
-            left_on="FORMATTED_POSTCODE",
-            right_on="FORMATTED_POSTCODE",
-            how="left",
-            suffixes=("", "_GEOCODED_DATASET"),
-            validate="m:1",
-        )
-
-        total_records = len(user_df)
-        matched_records = merged_df["ADDRESS"].notna().sum()
-        fraction_merged = matched_records / total_records
-        process_time = time.perf_counter() - start_time
-        human_readable_time = humanize.naturaldelta(
-            process_time, minimum_unit="milliseconds"
-        )
-        st.caption(
-            f"Processed **{total_records}** records in **{human_readable_time}** and matched **{matched_records}** records ({fraction_merged:.2%}) in the `{postal_code_column}` column."
-        )
-        geo_heading_col, geo_view_all_column = st.columns(2)
-        with geo_heading_col:
-            st.markdown(
-                "Geocoded postal codes:",
-                help="""
+    total_records = len(user_df)
+    matched_records = merged_df["ADDRESS"].notna().sum()
+    fraction_merged = matched_records / total_records
+    process_time = time.perf_counter() - start_time
+    human_readable_time = humanize.naturaldelta(
+        process_time, minimum_unit="milliseconds"
+    )
+    st.caption(
+        f"Processed **{total_records}** records in **{human_readable_time}** and matched **{matched_records}** records ({fraction_merged:.2%}) in the `{test_results.iloc[0]['COLUMN']}` column."
+    )
+    geo_heading_col, geo_view_all_column = st.columns(2)
+    with geo_heading_col:
+        st.markdown(
+            "Geocoded postal codes:",
+            help="""
 The geo-info (latitude and longitude info) are added as new fields, together with other fields from the master postal code geodataset.
 The fields include:
 
@@ -278,55 +265,55 @@ The fields include:
 
 If these field names were in the uploaded file, they will have the `_GEOCODED_DATASET` suffix.
 """,
+        )
+    with geo_view_all_column:
+        view_all_geo = st.checkbox("View full geocoded table")
+    if not view_all_geo:
+        st.write(merged_df.head())
+    else:
+        st.write(merged_df)
+    non_merged = merged_df.loc[merged_df["LATITUDE"].isna()]
+    if len(non_merged) > 0:
+        st.caption(
+            f"**{len(non_merged)}** ({len(non_merged) / len(merged_df) * 100:.2f}%) postal codes could not be geocoded."
+        )
+        tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
+        with tab2:
+            st.write(
+                "Below are the reasons for the failed matches and the number and \% of records at fault:"
             )
-        with geo_view_all_column:
-            view_all_geo = st.checkbox("View full geocoded table")
-        if not view_all_geo:
-            st.write(merged_df.head())
-        else:
-            st.write(merged_df)
-        non_merged = merged_df.loc[merged_df["LATITUDE"].isna()]
-        if len(non_merged) > 0:
-            st.caption(
-                f"**{len(non_merged)}** ({len(non_merged) / len(merged_df) * 100:.2f}%) postal codes could not be geocoded."
+            wrong_stat = pd.DataFrame(
+                non_merged["INCORRECT_INPUT_POSTCODE_REASON"].value_counts()
             )
-            tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
-            with tab2:
-                st.write(
-                    "Below are the reasons for the failed matches and the number and \% of records at fault:"
-                )
-                wrong_stat = pd.DataFrame(
-                    non_merged["INCORRECT_INPUT_POSTCODE_REASON"].value_counts()
-                )
-                wrong_stat = wrong_stat.assign(
-                    **{"%": (wrong_stat["count"] / len(non_merged)).round(2) * 100}
-                )
-                st.write(wrong_stat)
-                st.write("The records at fault:")
-                st.write(
-                    "Below are the records at fault. See the `INCORRECT_INPUT_POSTCODE_REASON` column at the end of the table:"
-                )
-                st.write(non_merged)
-                st.write(
-                    "Note that the download file contains both the geocoded and failed geocoded data."
-                )
-            with tab1:
-                st.caption(
-                    "The map below shows the location of the successfully geocoded postal codes. The address and postcode of each location are displayed when hovering over the points."
-                )
-                generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
-        else:
+            wrong_stat = wrong_stat.assign(
+                **{"%": (wrong_stat["count"] / len(non_merged)).round(2) * 100}
+            )
+            st.write(wrong_stat)
+            st.write("The records at fault:")
+            st.write(
+                "Below are the records at fault. See the `INCORRECT_INPUT_POSTCODE_REASON` column at the end of the table:"
+            )
+            st.write(non_merged)
+            st.write(
+                "Note that the download file contains both the geocoded and failed geocoded data."
+            )
+        with tab1:
             st.caption(
                 "The map below shows the location of the successfully geocoded postal codes. The address and postcode of each location are displayed when hovering over the points."
             )
             generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
-
-        # Option to download the merged DataFrame
-        csv = merged_df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="Download the geocoded data as a CSV file",
-            data=csv,
-            file_name=f"{name}__postal_geocoded.csv",
-            mime="text/csv",
-            help="Note that the postal codes that could not be geocoded are included in the download.",
+    else:
+        st.caption(
+            "The map below shows the location of the successfully geocoded postal codes. The address and postcode of each location are displayed when hovering over the points."
         )
+        generate_map(merged_df.dropna(subset=["LATITUDE", "LONGITUDE"]))
+
+    # Option to download the merged DataFrame
+    csv = merged_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="Download the geocoded data as a CSV file",
+        data=csv,
+        file_name=f"{name}__postal_geocoded.csv",
+        mime="text/csv",
+        help="Note that the postal codes that could not be geocoded are included in the download.",
+    )
