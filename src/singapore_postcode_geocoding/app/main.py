@@ -110,6 +110,9 @@ def return_postcodes_masterlist():
 
 
 def generate_map(plot_df) -> None:
+    # Get first 5 column names
+    first_five = plot_df.columns[:5].tolist()
+    
     point_layer = pdk.Layer(
         "ScatterplotLayer",
         data=plot_df,
@@ -137,7 +140,25 @@ def generate_map(plot_df) -> None:
     deck = pdk.Deck(
         layers=[point_layer],
         initial_view_state=view_state,
-        tooltip={"text": "{ADDRESS}\nPostal Code: {POSTAL}"},
+        tooltip={
+            "html": f"""
+                <b>Input data:</b><br/>
+                {first_five[0]}: {{{first_five[0]}}}<br/>
+                {first_five[1]}: {{{first_five[1]}}}<br/>
+                {first_five[2]}: {{{first_five[2]}}}<br/>
+                {first_five[3]}: {{{first_five[3]}}}<br/>
+                {first_five[4]}: {{{first_five[4]}}}<br/>
+                <b>Matched postal Info:</b><br/>
+                Postal: {{POSTAL}}<br/>
+                Address: {{ADDRESS}}
+            """,
+            "style": {
+                "backgroundColor": "white",
+                "color": "black",
+                "padding": "10px",
+                "border-radius": "5px"
+            }
+        },
         map_style=None,
     )
 
@@ -176,74 +197,60 @@ if uploaded_files:
 
     # auto-extract postcode here:
     start_time = time.perf_counter()
-    converted_df, success, test_results = auto_convert_postcodes(
-        df=user_df,
-        validation_config={
-            "validation_field_names": {
-                "correct_input_flag": "CORRECT_INPUT_POSTCODE",
-                "incorrect_reason": "INCORRECT_INPUT_POSTCODE_REASON",
-                "formatted_postcode": "FORMATTED_POSTCODE",
-                "candidate_postcode": "POSTCODE",
-                "extracted_postcode": "EXTRACTED"
+    with st.spinner('Geocoding your data... This may take a few moments.'):
+        converted_df, success, test_results = auto_convert_postcodes(
+            df=user_df,
+            validation_config={
+                "validation_field_names": {
+                    "correct_input_flag": "CORRECT_INPUT_POSTCODE",
+                    "incorrect_reason": "INCORRECT_INPUT_POSTCODE_REASON",
+                    "formatted_postcode": "FORMATTED_POSTCODE",
+                    "candidate_postcode": "POSTCODE",
+                    "extracted_postcode": "EXTRACTED"
+                },
+                "range": {"int": [18906, 918146], "len": [5, 6]},
+                "drop_incorrect": False,
+                "keep_formatted_postcode_field": True,
+                "keep_validation_fields": True
             },
-            "range": {"int": [18906, 918146], "len": [5, 6]},
-            "drop_incorrect": False,
-            "keep_formatted_postcode_field": True,
-            "keep_validation_fields": True
-        },
-        master_postcodes=postcode_masterlist,
-        auto_identify_config={"regex_pattern": r"(?<!\d)(\d{5,6})(?!\d)", "success_threshold": 0.1}
-    )
-    
-    if success:
-        if test_results.iloc[0]["METHOD"] == "DIRECT":
-            st.caption(
-                f"`{test_results.iloc[0]['COLUMN']}` is the best candidate postcode column. The predicated success rate for using it is {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100}%"
-            )
-        else:
-            st.caption(
-                f"The `{test_results.iloc[0]['COLUMN']}` is the best candidate column with imbedded postcode info. The predicated success rate for using it is {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100}%"
-            )
-        
-        # Use the converted DataFrame directly
-        user_df = converted_df
-    else:
-        st.caption(
-            f"Unfortunately, there are no good candidate columns with postcode info. The best-predicated success rate was only {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] if not test_results.empty else 0}. Please check your input data."
+            master_postcodes=postcode_masterlist,
+            auto_identify_config={"regex_pattern": r"(?<!\d)(\d{5,6})(?!\d)", "success_threshold": 0.1}
         )
-        st.stop()
-
-    # Display the uploaded file
-    heading_col, view_all_column = st.columns(2)
-    with heading_col:
-        st.write("Uploaded DataFrame:")
-    with view_all_column:
-        view_all = st.checkbox("View full table")
-    if not view_all:
-        st.write(user_df.head())
-    else:
-        st.write(user_df)
-
-    # Merge the uploaded file with the internal dataset
-    merged_df = user_df.merge(
-        postcode.drop_duplicates("FORMATTED_POSTCODE"),
-        left_on="FORMATTED_POSTCODE",
-        right_on="FORMATTED_POSTCODE",
-        how="left",
-        suffixes=("", "_GEOCODED_DATASET"),
-        validate="m:1",
-    )
-
+    
+    # Calculate processing metrics
     total_records = len(user_df)
-    matched_records = merged_df["ADDRESS"].notna().sum()
-    fraction_merged = matched_records / total_records
     process_time = time.perf_counter() - start_time
     human_readable_time = humanize.naturaldelta(
         process_time, minimum_unit="milliseconds"
     )
-    st.caption(
-        f"Processed **{total_records}** records in **{human_readable_time}** and matched **{matched_records}** records ({fraction_merged:.2%}) in the `{test_results.iloc[0]['COLUMN']}` column."
-    )
+
+    if success:
+        # Use the converted DataFrame directly
+        user_df = converted_df
+        
+        # Merge the uploaded file with the internal dataset
+        merged_df = user_df.merge(
+            postcode.drop_duplicates("FORMATTED_POSTCODE"),
+            left_on="FORMATTED_POSTCODE",
+            right_on="FORMATTED_POSTCODE",
+            how="left",
+            suffixes=("", "_GEOCODED_DATASET"),
+            validate="m:1",
+        )
+
+        matched_records = merged_df["ADDRESS"].notna().sum()
+        fraction_merged = matched_records / total_records
+
+        if test_results.iloc[0]["METHOD"] == "DIRECT":
+            postcode_message = f"Best postcode column: `{test_results.iloc[0]['COLUMN']}` (Match Rate: {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100:.1f}%)"
+        else:
+            postcode_message = f"Best postcode information in: `{test_results.iloc[0]['COLUMN']}` (Match Rate: {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] * 100:.1f}%)"
+    else:
+        st.error(
+            f"❌ No suitable postcode column found. Best predicted success rate: {test_results.iloc[0]['CONVERSION_SUCCESS_RATE'] if not test_results.empty else 0:.1f}%"
+        )
+        st.stop()
+
     geo_heading_col, geo_view_all_column = st.columns(2)
     with geo_heading_col:
         st.markdown(
@@ -275,7 +282,10 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
     non_merged = merged_df.loc[merged_df["LATITUDE"].isna()]
     if len(non_merged) > 0:
         st.caption(
-            f"**{len(non_merged)}** ({len(non_merged) / len(merged_df) * 100:.2f}%) postal codes could not be geocoded."
+            f"Best column: `{test_results.iloc[0]['COLUMN']}` • "
+            f"{total_records:,} records in {human_readable_time} • "
+            f"{matched_records:,} ({fraction_merged * 100:.1f}%) matched • "
+            f"{len(non_merged)} ({len(non_merged) / len(merged_df) * 100:.1f}%) failed"
         )
         tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
         with tab2:
