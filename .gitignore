@@ -164,3 +164,15 @@ venv.bak/
 mlruns/*
 
 .specstory/
+
+# Keep these test/example files for the app (except EntitiesRegisteredwithACRA.csv)
+!data/01_raw/test/ListofGovernmentMarketsHawkerCentres.csv
+!data/01_raw/test/ManagementCorporationStrataTitle.csv
+!data/01_raw/test/ListingofBuildingEnergyPerformanceData2020.csv
+!data/01_raw/test/HDBCarparkInformation.csv
+!data/01_raw/test/HDBPropertyInformation.csv
+!data/01_raw/test/RentingOutofFlats2024CSV.csv
+!data/01_raw/test/SGOSatelliteOffices.csv
+!data/01_raw/test/MCSTinformation.xlsx
+!data/01_raw/test/ListofSupermarketLicences.csv
+!data/01_raw/test/DatesofHawkerCentresClosure.csv
