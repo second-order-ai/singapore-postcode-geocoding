@@ -54,7 +54,6 @@ def main():
         result = handle_file_upload(uploaded_files)
         if result:
             user_df, name = result
-            
             # Geocode the data
             geocoding_result = process_geocoding(
                 user_df=user_df,

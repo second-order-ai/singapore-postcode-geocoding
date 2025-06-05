@@ -34,19 +34,21 @@ If these field names were in the uploaded file, they will have the `_GEOCODED_DA
         st.write(merged_df)
     
     non_merged = merged_df.loc[merged_df["LATITUDE"].isna()]
+    
+    # Always show KPIs regardless of success rate
+    human_readable_time = humanize.naturaldelta(
+        geocoding_result.process_time, minimum_unit="milliseconds"
+    )
+    fraction_merged = geocoding_result.matched_records / geocoding_result.total_records
+    
+    st.caption(
+        f"Best column: `{geocoding_result.test_results.iloc[0]['COLUMN']}` • "
+        f"{geocoding_result.total_records:,} records in {human_readable_time} • "
+        f"{geocoding_result.matched_records:,} ({fraction_merged * 100:.1f}%) matched • "
+        f"{len(non_merged)} ({len(non_merged) / len(merged_df) * 100:.1f}%) failed"
+    )
+    
     if len(non_merged) > 0:
-        human_readable_time = humanize.naturaldelta(
-            geocoding_result.process_time, minimum_unit="milliseconds"
-        )
-        fraction_merged = geocoding_result.matched_records / geocoding_result.total_records
-        
-        st.caption(
-            f"Best column: `{geocoding_result.test_results.iloc[0]['COLUMN']}` • "
-            f"{geocoding_result.total_records:,} records in {human_readable_time} • "
-            f"{geocoding_result.matched_records:,} ({fraction_merged * 100:.1f}%) matched • "
-            f"{len(non_merged)} ({len(non_merged) / len(merged_df) * 100:.1f}%) failed"
-        )
-        
         tab1, tab2 = st.tabs(["Geocoded data map", "Failed geocoded data"])
         with tab2:
             st.write(
