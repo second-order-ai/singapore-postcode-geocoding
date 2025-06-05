@@ -8,6 +8,12 @@ This is your new Kedro project with Kedro-Viz setup, which was generated using `
 
 Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
 
+## App Information
+
+The Streamlit web application is available at: [https://sg-postcode-geocoding.streamlit.app/](https://sg-postcode-geocoding.streamlit.app/)
+
+The app code is located in `src/singapore_postcode_geocoding/app/`
+
 ## Rules and guidelines
 
 In order to get the best out of the template:
