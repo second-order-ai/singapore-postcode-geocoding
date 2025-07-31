@@ -161,6 +161,94 @@ Successful conversion produces a DataFrame with additional validation columns:
 
 This system enables robust postcode processing for Singapore address data, making it ideal for geocoding applications, data cleaning, and geographic analysis.
 
+## Installation
+
+### Install from GitHub
+
+You can install this package directly from GitHub to use in your own projects:
+
+```bash
+# Install the latest version from main branch
+pip install git+https://github.com/second-order-ai/singapore-postcode-geocoding.git
+
+# Or install from a specific branch
+pip install git+https://github.com/second-order-ai/singapore-postcode-geocoding.git@branch-name
+
+# Or install from a specific tag/release
+pip install git+https://github.com/second-order-ai/singapore-postcode-geocoding.git@v1.0.0
+```
+
+> **Note**: If you encounter import errors with `singapore_postcode_validation` module, make sure you're using the latest version from the main branch which includes the proper package structure fixes.
+
+### Using uv (recommended for this project)
+
+```bash
+uv add git+https://github.com/second-order-ai/singapore-postcode-geocoding.git
+```
+
+### Add to requirements.txt
+
+In your project's `requirements.txt`:
+```
+singapore-postcode-geocoding @ git+https://github.com/second-order-ai/singapore-postcode-geocoding.git
+```
+
+### Usage in External Projects
+
+After installation, you can use the geocoding system in your own projects:
+
+```python
+import pandas as pd
+from singapore_postcode_geocoding.pipelines.postcode_identification.auto_identification_classes_pipeline.nodes import (
+    find_best_postcode_column,
+    auto_convert_postcodes
+)
+
+# Load your data
+df = pd.read_csv("your_data.csv")
+
+# Load master postcodes
+master_postcodes_url = "https://github.com/second-order-ai/singapore-postcode-geocoding/raw/refs/heads/main/data/03_primary/singapore_postcodes_masterlist.parquet/2025-02-11T21.27.51.862Z/singapore_postcodes_masterlist.parquet"
+master_postcodes = pd.read_parquet(master_postcodes_url)
+
+# Configure validation and auto-identification
+validation_config = {
+    "range": {"int": [18906, 918146], "len": [5, 6]},
+    "drop_incorrect": False,
+    "keep_validation_fields": True,
+    "keep_formatted_postcode_field": True,
+    "validation_field_names": {
+        "candidate_postcode": "CANDIDATE_POSTCODE",
+        "extracted_postcode": "EXTRACTED_POSTCODE", 
+        "correct_input_flag": "CORRECT_INPUT_POSTCODE",
+        "incorrect_reason": "INCORRECT_INPUT_POSTCODE_REASON",
+        "formatted_postcode": "FORMATTED_POSTCODE"
+    }
+}
+
+auto_identify_config = {
+    "candidate_columns": None,
+    "regex_pattern": r"((?<!\d)\d{5,6}(?!\d))",
+    "sample_size": 100,
+    "success_threshold": 0.1,
+    "seed": 42
+}
+
+# Automatically identify and convert postcodes
+converted_df, success, test_results = auto_convert_postcodes(
+    df=df,
+    validation_config=validation_config,
+    master_postcodes=master_postcodes,
+    auto_identify_config=auto_identify_config
+)
+
+if success:
+    print("✅ Postcodes successfully identified and converted!")
+    # Your geocoded data is now in converted_df
+else:
+    print("❌ No suitable postcode column found")
+```
+
 ## Rules and guidelines
 
 In order to get the best out of the template:
