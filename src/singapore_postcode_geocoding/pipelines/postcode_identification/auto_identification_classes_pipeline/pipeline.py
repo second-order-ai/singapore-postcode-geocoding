@@ -5,7 +5,7 @@ This module provides two pipelines:
 2. Manual pipeline that uses specified column and method via configuration
 """
 
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, Node
 import pandas as pd
 
 from .nodes import (
@@ -15,11 +15,13 @@ from .nodes import (
 )
 
 
-def create_manual_test_results_adapter(df: pd.DataFrame, manual_config: dict) -> pd.DataFrame:
+def create_manual_test_results_adapter(
+    df: pd.DataFrame, manual_config: dict
+) -> pd.DataFrame:
     """Adapter to convert manual configuration into the expected test results format.
-    
+
     This allows us to reuse the existing pipeline structure without modification.
-    
+
     Args:
         df: Input DataFrame (not used, but required for interface consistency)
         manual_config: Dictionary containing manual configuration:
@@ -29,27 +31,35 @@ def create_manual_test_results_adapter(df: pd.DataFrame, manual_config: dict) ->
                 "CONVERSION_SUCCESS_RATE": float,  # Optional, defaults to 1.0
                 "REGEX_PATTERN": str  # Required only for INDIRECT method
             }
-    
+
     Returns:
         pd.DataFrame: Test results in the format expected by the conversion pipeline
     """
-    return pd.DataFrame([{
-        "CONVERSION_SUCCESS_RATE": manual_config.get("CONVERSION_SUCCESS_RATE", 1.0),
-        "COLUMN": manual_config["COLUMN"],
-        "METHOD": manual_config["METHOD"],
-        "REGEX_PATTERN": manual_config.get("REGEX_PATTERN") if manual_config["METHOD"] == "INDIRECT" else None
-    }])
+    return pd.DataFrame(
+        [
+            {
+                "CONVERSION_SUCCESS_RATE": manual_config.get(
+                    "CONVERSION_SUCCESS_RATE", 1.0
+                ),
+                "COLUMN": manual_config["COLUMN"],
+                "METHOD": manual_config["METHOD"],
+                "REGEX_PATTERN": manual_config.get("REGEX_PATTERN")
+                if manual_config["METHOD"] == "INDIRECT"
+                else None,
+            }
+        ]
+    )
 
 
 def create_pipeline() -> Pipeline:
     """Create the automatic postcode identification pipeline.
-    
+
     This pipeline automatically finds the best column and method for postcode conversion
     by testing all columns with both direct and indirect methods.
     """
     return Pipeline(
         [
-            node(
+            Node(
                 find_best_postcode_column,
                 inputs={
                     "df": "input_data",
@@ -60,7 +70,7 @@ def create_pipeline() -> Pipeline:
                 outputs="postcode_match_test_results",
                 name="find_best_postcode_column",
             ),
-            node(
+            Node(
                 convert_best_postcode_column,
                 inputs={
                     "df": "input_data",
@@ -72,7 +82,7 @@ def create_pipeline() -> Pipeline:
                 outputs=["converted_data", "conversion_successful"],
                 name="convert_best_postcode_column",
             ),
-            node(
+            Node(
                 merge_postcode_data,
                 inputs={
                     "converted_df": "converted_data",
@@ -89,13 +99,13 @@ def create_pipeline() -> Pipeline:
 
 def create_manual_pipeline() -> Pipeline:
     """Create the manual postcode identification pipeline.
-    
+
     This pipeline uses manually specified column and method for postcode conversion,
     adapting the configuration to work with the existing pipeline structure.
     """
     return Pipeline(
         [
-            node(
+            Node(
                 create_manual_test_results_adapter,
                 inputs={
                     "df": "input_data",
@@ -104,7 +114,7 @@ def create_manual_pipeline() -> Pipeline:
                 outputs="postcode_match_test_results",
                 name="create_manual_test_results",
             ),
-            node(
+            Node(
                 convert_best_postcode_column,
                 inputs={
                     "df": "input_data",
@@ -115,7 +125,7 @@ def create_manual_pipeline() -> Pipeline:
                 outputs=["converted_data", "conversion_successful"],
                 name="convert_best_postcode_column",
             ),
-            node(
+            Node(
                 merge_postcode_data,
                 inputs={
                     "converted_df": "converted_data",

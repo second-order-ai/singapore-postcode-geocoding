@@ -8,7 +8,7 @@ from .auto_identification_classes_pipeline.pipeline import (
 
 def create_test_auto_identification_classes_pipeline() -> Pipeline:
     return pipeline(
-        pipe=test_auto_identification_classes_pipeline(),
+        nodes=test_auto_identification_classes_pipeline(),
         namespace="post_code_identification_classes_indirect_small",
         inputs={
             "input_data": "ListofGovernmentMarketsHawkerCentres",
@@ -21,7 +21,7 @@ def create_test_auto_identification_classes_pipeline() -> Pipeline:
             "postcode_master_merge_config": "postcode_master_merge_config",
         },  # type: ignore
     ) + pipeline(
-        pipe=test_auto_identification_classes_pipeline(),
+        nodes=test_auto_identification_classes_pipeline(),
         namespace="post_code_identification_classes_direct_large",
         inputs={
             "input_data": "EntitiesRegisteredwithACRA",
@@ -38,16 +38,16 @@ def create_test_auto_identification_classes_pipeline() -> Pipeline:
 
 def create_test_manual_identification_classes_pipeline() -> Pipeline:
     """Create test pipelines for manual postcode identification.
-    
+
     Creates two test pipelines:
     1. For small dataset (ListofGovernmentMarketsHawkerCentres) using indirect method
     2. For large dataset (EntitiesRegisteredwithACRA) using direct method
-    
+
     Both pipelines use the same test files as the automatic identification pipeline
     but with manually specified configuration from parameters.yml.
     """
     return pipeline(
-        pipe=test_manual_identification_classes_pipeline(),
+        nodes=test_manual_identification_classes_pipeline(),
         namespace="post_code_identification_manual_indirect_small",
         inputs={
             "input_data": "ListofGovernmentMarketsHawkerCentres",
@@ -60,7 +60,7 @@ def create_test_manual_identification_classes_pipeline() -> Pipeline:
             "postcode_master_merge_config": "postcode_master_merge_config",
         },  # type: ignore
     ) + pipeline(
-        pipe=test_manual_identification_classes_pipeline(),
+        nodes=test_manual_identification_classes_pipeline(),
         namespace="post_code_identification_manual_direct_large",
         inputs={
             "input_data": "EntitiesRegisteredwithACRA",

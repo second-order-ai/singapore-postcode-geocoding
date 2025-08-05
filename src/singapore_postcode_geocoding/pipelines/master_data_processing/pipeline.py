@@ -35,7 +35,7 @@ Output Datasets:
     - singapore_postcodes_masterlist: Deduplicated list of valid postal codes
 """
 
-from kedro.pipeline import Pipeline, node
+from kedro.pipeline import Pipeline, Node
 
 from .nodes import (
     enrich_open_postcode,
@@ -77,28 +77,28 @@ def create_pipeline(**kwargs) -> Pipeline:
     return Pipeline(
         [
             # Format OneMap data
-            node(
+            Node(
                 func=format_onemap,
                 inputs=["one_map_scrape", "params:postcode_validation"],
                 outputs="formatted_onemap",
                 name="format_onemap",
             ),
             # Format OpenData
-            node(
+            Node(
                 func=format_opendata,
                 inputs=["open_data_postal_code", "params:postcode_validation"],
                 outputs="formatted_opendata",
                 name="format_opendata",
             ),
             # Format PostcodeBase data
-            node(
+            Node(
                 func=format_postcodebase,
                 inputs=["sg_postcode_based_via_getdata", "params:postcode_validation"],
                 outputs="formatted_postcodebase",
                 name="format_postcodebase",
             ),
             # Enrich OpenData with PostcodeBase addresses
-            node(
+            Node(
                 func=enrich_open_postcode,
                 inputs=[
                     "formatted_opendata",
@@ -109,7 +109,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="enrich_opendata",
             ),
             # Extend OneMap data with additional postal codes
-            node(
+            Node(
                 func=extend_onemap,
                 inputs=[
                     "formatted_onemap",
@@ -120,14 +120,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="extend_onemap",
             ),
             # Convert all columns to appropriate types
-            node(
+            Node(
                 func=postcode_full_type_conversion,
                 inputs=["extended_onemap", "params:postcode_validation"],
                 outputs="singapore_postcodes_geocoded",
                 name="convert_types",
             ),
             # Create deduplicated master list, with only postcodes
-            node(
+            Node(
                 func=return_postcode_master_list,
                 inputs=["singapore_postcodes_geocoded", "params:postcode_validation"],
                 outputs="singapore_postcodes_masterlist",

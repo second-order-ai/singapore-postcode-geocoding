@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 name = "singapore_postcode_geocoding"
 readme = "README.md"
 dynamic = ["version"]
@@ -11,8 +11,8 @@ dependencies = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
     "notebook",
-    "kedro[jupyter]~=0.19.10",
-    "kedro-datasets[matplotlib-matplotlibwriter,pandas-csvdataset,pandas-exceldataset,pandas-parquetdataset,plotly-jsondataset,plotly-plotlydataset]>=3.0",
+    "kedro[jupyter]>=1.0.0,<2.0.0",
+    "kedro-datasets[matplotlib-matplotlibwriter,pandas-csvdataset,pandas-exceldataset,pandas-parquetdataset,plotly-jsondataset,plotly-plotlydataset]==6.0.0",
     "kedro-viz>=6.7.0",
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
@@ -63,7 +63,7 @@ namespaces = false
 [tool.kedro]
 package_name = "singapore_postcode_geocoding"
 project_name = "singapore-postcode-geocoding"
-kedro_init_version = "0.19.10"
+kedro_init_version = "1.0.0"
 tools = "['Linting', 'Testing', 'Custom Logging', 'Documentation', 'Data Structure', 'Kedro Viz']"
 example_pipeline = "True"
 source_dir = "src"
