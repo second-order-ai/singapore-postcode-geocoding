@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 VALIDATION_DEFAULTS = {
@@ -41,7 +40,7 @@ def log_validation_step(
     invalid_count = total - valid_count
 
     # Log summary
-    logger.info(
+    logger.debug(
         "%s - Valid: %d (%.1f%%), Invalid: %d (%.1f%%)",
         step_name,
         valid_count,
@@ -55,7 +54,7 @@ def log_validation_step(
         reasons = df[~df[flag_field]][reason_field].value_counts()
         for reason, count in reasons.items():
             if pd.notna(reason):
-                logger.info("\t- %s: %d (%.1f%%)", reason, count, 100 * count / total)
+                logger.debug("\t- %s: %d (%.1f%%)", reason, count, 100 * count / total)
 
 
 def parse_numeric_postcodes(
@@ -114,7 +113,7 @@ def parse_numeric_postcodes(
         8     999999          999999.0                    True                               NaN
         9      12345           12345.0                    True                               NaN
     """
-    logger.info("Checking for numeric postcodes...")
+    logger.debug("Checking for numeric postcodes...")
     incorrect_reason_field = validation_field_names["incorrect_reason"]
     correct_input_flag_field = validation_field_names["correct_input_flag"]
     formatted_postcode = validation_field_names["formatted_postcode"]
@@ -213,7 +212,7 @@ def check_is_integer(
         8     999999          999999.0                    True                               NaN
         9      12345           12345.0                    True                               NaN
     """
-    logger.info("Checking that postcodes are integers...")
+    logger.debug("Checking that postcodes are integers...")
     incorrect_reason_field = validation_field_names["incorrect_reason"]
     correct_input_flag_field = validation_field_names["correct_input_flag"]
     formatted_postcode = validation_field_names["formatted_postcode"]
@@ -294,11 +293,11 @@ def check_postcode_range(
         8     999999               NaN                   False                      OUT_OF_RANGE
         9      12345           12345.0                    True                               NaN
     """
-    logger.info("Checking that postcodes are within valid range...")
+    logger.debug("Checking that postcodes are within valid range...")
     incorrect_reason_field = validation_field_names["incorrect_reason"]
     correct_input_flag_field = validation_field_names["correct_input_flag"]
     formatted_postcode = validation_field_names["formatted_postcode"]
-    logger.info("Valid range: %s", postal_int_range)
+    logger.debug("Valid range: %s", postal_int_range)
     in_range = df[formatted_postcode].between(
         postal_int_range[0], postal_int_range[1], inclusive="both"
     )
@@ -373,7 +372,7 @@ def format_valid_postcodes(
         8     999999              NaN                   False                      OUT_OF_RANGE
         9      12345           012345                    True                               NaN
     """
-    logger.info("Formatting valid postcodes...")
+    logger.debug("Formatting valid postcodes...")
     correct_input_flag_field = validation_field_names["correct_input_flag"]
     formatted_postcode = validation_field_names["formatted_postcode"]
     valid_mask = df[correct_input_flag_field]
@@ -388,7 +387,7 @@ def format_valid_postcodes(
             )
         }
     )
-    logger.info("Formatted postcodes are now in column: `%s`", formatted_postcode)
+    logger.debug("Formatted postcodes are now in column: `%s`", formatted_postcode)
     return df
 
 
@@ -452,7 +451,7 @@ def check_in_master_dataset(
     Raises:
         ValueError: If master_postcodes DataFrame has more than one column
     """
-    logger.info("Checking postcodes against master dataset postcodes...")
+    logger.debug("Checking postcodes against master dataset postcodes...")
     if isinstance(master_postcodes, pd.DataFrame) and master_postcodes.shape[1] != 1:
         raise ValueError(
             "Master postcode dataset should have only one column, the postcode"
@@ -560,7 +559,7 @@ def validate_and_format_postcodes(
     keep_formatted_postcode_field = postcode_validation_config[
         "keep_formatted_postcode_field"
     ]
-    logger.info(f"Checking postcodes in column: {input_col}")
+    logger.debug("Validating postcodes in column: %s", input_col)
     df = parse_numeric_postcodes(df, input_col, validation_field_names)
     df = check_is_integer(df, validation_field_names)
     df = check_postcode_range(df, postal_int_range, validation_field_names)
@@ -569,7 +568,7 @@ def validate_and_format_postcodes(
     if master_postcodes is not None:  # we can use this for the master as well...
         df = check_in_master_dataset(df, master_postcodes, validation_field_names)
 
-    logger.info("VALIDATION AND CONVERSION SUMMARY:")
+    logger.debug("VALIDATION AND CONVERSION SUMMARY:")
     log_validation_step(
         df, validation_field_names, step_name="`validate_and_format_postcodes`"
     )

@@ -3,6 +3,7 @@ Classes and functions for automatically identifying and extracting postcodes fro
 It's rather verbose to allow it to be used in pipelines, notebooks and streamlit front-ends.
 """
 
+import logging
 from copy import deepcopy
 
 import pandas as pd
@@ -10,6 +11,8 @@ import pandas as pd
 from singapore_postcode_geocoding.data_validation.singapore_postcode_validation import (
     validate_and_format_postcodes,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def regex_extract(candidates: pd.Series, regex_pattern: str) -> pd.Series:
@@ -395,10 +398,12 @@ def convert_best_postcode_column(
     df,
     validation_config,
     master_postcodes,
-    auto_identify_config = None,
-    convert_test_results = None,
+    auto_identify_config=None,
+    convert_test_results=None,
 ) -> tuple[pd.DataFrame, bool]:
-    success_threshold = auto_identify_config.get("success_threshold") if auto_identify_config else None
+    success_threshold = (
+        auto_identify_config.get("success_threshold") if auto_identify_config else None
+    )
     convert_postcodes = ConvertPostcodes(
         df,
         validation_config,
@@ -460,10 +465,23 @@ def auto_convert_postcodes(
     convert_test_results = find_best_postcode_column(
         df, validation_config, master_postcodes, auto_identify_config
     )
-    
+
     # If no valid results found, return original DataFrame
     if convert_test_results.empty:
+        logger.info("Auto-identification: No valid postcode columns found")
         return df, False, convert_test_results
+
+    # Log the best result found
+    best_result = convert_test_results.iloc[0]
+    success_rate = best_result["CONVERSION_SUCCESS_RATE"]
+    column = best_result["COLUMN"]
+    method = best_result["METHOD"]
+    logger.info(
+        "Auto-identification: Best match - %s column '%s' (%.1f%% success)",
+        method.lower(),
+        column,
+        success_rate * 100,
+    )
 
     converted_df, conversion_passed = convert_best_postcode_column(
         df,
