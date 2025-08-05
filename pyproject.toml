@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 requires-python = ">=3.10"
 name = "singapore_postcode_geocoding"
-version = "0.1"
+version = "0.2"
 readme = "README.md"
 dependencies = [
     "ipython>=8.10",
