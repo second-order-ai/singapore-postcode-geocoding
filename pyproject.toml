@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 requires-python = ">=3.9"
 name = "singapore_postcode_geocoding"
+version = "0.1"
 readme = "README.md"
-dynamic = ["version"]
 dependencies = [
     "ipython>=8.10",
     "jupyterlab>=3.0",
@@ -52,9 +52,6 @@ dev = [
     "pytest~=7.2",
     "ruff~=0.1.8"
 ]
-
-[tool.setuptools.dynamic]
-version = {attr = "singapore_postcode_geocoding.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

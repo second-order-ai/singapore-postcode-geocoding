@@ -4672,6 +4672,7 @@ wheels = [
 
 [[package]]
 name = "singapore-postcode-geocoding"
+version = "0.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
