@@ -1795,15 +1795,15 @@ jupyter = [
 
 [[package]]
 name = "kedro-datasets"
-version = "6.0.0"
+version = "8.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "kedro" },
     { name = "lazy-loader" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/00/9cd5ed25df12332dbe0cde093c41e2d66dad49e88b84d6115db43d986f23/kedro_datasets-6.0.0.tar.gz", hash = "sha256:6dc964d4b60bab89c9836044fe2a027676395acac610a1500a4727036c38a3c4", size = 119216, upload-time = "2024-12-18T16:47:11.942Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/2e/abb1591423876a199ecc24dc6dcb50e6c7625b64439df7089f37934834d7/kedro_datasets-8.0.0.tar.gz", hash = "sha256:796e1fc509d5e804638591f33462009887edff1ba8d4b148a5082baf3f2d2ec6", size = 131124, upload-time = "2025-07-14T10:22:05.196Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/57/29be152276926f976c2041a9fa2712935ab10351d135f552e00b8508ce4b/kedro_datasets-6.0.0-py3-none-any.whl", hash = "sha256:64b538291217afcc16b9c24ca2937c132c486b7303a3d707e07ade9b51426914", size = 210825, upload-time = "2024-12-18T16:47:09.232Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/04/8e306fbc27106fd5d2b7bdb4236fe5adb1e2030048f5b68aa037e5504ad9/kedro_datasets-8.0.0-py3-none-any.whl", hash = "sha256:ee61206b3f356500791f487efa5a7270d2cfc587062060399bedb63619391706", size = 228834, upload-time = "2025-07-14T10:22:03.209Z" },
 ]
 
 [package.optional-dependencies]
@@ -4327,7 +4327,7 @@ requires-dist = [
     { name = "jinja2", marker = "extra == 'docs'", specifier = "<3.2.0" },
     { name = "jupyterlab", specifier = ">=3.0" },
     { name = "kedro", extras = ["jupyter"], specifier = ">=1.0.0,<2.0.0" },
-    { name = "kedro-datasets", extras = ["matplotlib-matplotlibwriter", "pandas-csvdataset", "pandas-exceldataset", "pandas-parquetdataset", "plotly-jsondataset", "plotly-plotlydataset"], specifier = "==6.0.0" },
+    { name = "kedro-datasets", extras = ["matplotlib-matplotlibwriter", "pandas-csvdataset", "pandas-exceldataset", "pandas-parquetdataset", "plotly-jsondataset", "plotly-plotlydataset"], specifier = "==8.0.0" },
     { name = "kedro-viz", specifier = ">=6.7.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=1.0,<2.1" },
     { name = "nbsphinx", marker = "extra == 'docs'", specifier = "==0.8.1" },
